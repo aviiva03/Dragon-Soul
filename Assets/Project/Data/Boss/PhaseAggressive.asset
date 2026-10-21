@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d9229991cea61a45a228bfe0013e9a0, type: 3}
+  m_Name: PhaseAggressive
+  m_EditorClassIdentifier: 
+  phaseName: PhaseAggressive
+  lowerHealthPercent: 0.25
+  upperHealthPercent: 0.5
+  availableCombos:
+  - combo: {fileID: 11400000, guid: 253a16e824be33a4c8711087a9f171c4, type: 2}
+    weight: 3
+    minDistance: 0
+    maxDistance: 6
+  - combo: {fileID: 11400000, guid: fe023221ea7f9c945a727fd63ba52ff5, type: 2}
+    weight: 3
+    minDistance: 0
+    maxDistance: 6
+  - combo: {fileID: 11400000, guid: 22f2fb5953bf0ac44b4f0c71f1c608b0, type: 2}
+    weight: 3
+    minDistance: 0
+    maxDistance: 6
+  - combo: {fileID: 11400000, guid: 4339a3974610a0d498807410dd445ab1, type: 2}
+    weight: 3
+    minDistance: 4
+    maxDistance: 15
+  - combo: {fileID: 11400000, guid: 23c7746c5d660f9478dfc5f7ee656507, type: 2}
+    weight: 2
+    minDistance: 4
+    maxDistance: 15
+  speedMultiplier: 1.2
+  cooldownMultiplier: 0.7
