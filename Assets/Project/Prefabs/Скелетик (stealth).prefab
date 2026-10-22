@@ -1846,6 +1846,7 @@ GameObject:
   - component: {fileID: 54225794339197012}
   - component: {fileID: 1011976560352804127}
   - component: {fileID: 2816323735760598198}
+  - component: {fileID: 7230040945010864899}
   m_Layer: 0
   m_Name: "\u0421\u043A\u0435\u043B\u0435\u0442\u0438\u043A (stealth)"
   m_TagString: Untagged
@@ -1966,6 +1967,23 @@ MonoBehaviour:
   _alertDuration: 1.5
   _detectionConfirmTime: 1.5
   _alertIndicator: {fileID: 7840416771420510816}
+--- !u!114 &7230040945010864899
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4102054305672091621}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a9606ac316e69e459512d2d748ba3aa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _canvasGroup: {fileID: 0}
+  _detectionText: {fileID: 0}
+  _alertMessage: "\u0412\u0430\u0441 \u0437\u0430\u043C\u0435\u0442\u0438\u043B\u0438..."
+  _fadeDuration: 0.5
+  _holdDuration: 1
 --- !u!1 &4139584173899308374
 GameObject:
   m_ObjectHideFlags: 0

@@ -11,7 +11,6 @@ public class DialogueUI : MonoBehaviour {
     [SerializeField] private CanvasGroup _canvasGroup;
     [SerializeField] private TMP_Text _speakerNameText;
     [SerializeField] private TMP_Text _dialogueText;
-    [SerializeField] private GameObject _continueHint;
 
     [Header("Choices")]
     [SerializeField] private Transform _choicesContainer;
@@ -24,11 +23,11 @@ public class DialogueUI : MonoBehaviour {
     private bool _isTyping;
     private bool _advanceRequested;
     private bool _isWaitingForChoice;
+    private bool _isTextFullyRevealed;
     private int _selectedChoiceIndex = -1;
 
     private void Awake() {
         _canvasGroup.alpha = 0f;
-        _continueHint.SetActive(false);
         _choicesContainer.gameObject.SetActive(false);
     }
 
@@ -36,13 +35,13 @@ public class DialogueUI : MonoBehaviour {
         gameObject.SetActive(true);
 
         _dialogueText.text = "";
-        _continueHint.SetActive(false);
         _choicesContainer.gameObject.SetActive(false);
         ClearChoiceButtons();
 
         _advanceRequested = false;
         _isWaitingForChoice = false;
         _selectedChoiceIndex = -1;
+        _isTextFullyRevealed = false;
 
         if (string.IsNullOrEmpty(node.speakerName)) {
             _speakerNameText.gameObject.SetActive(false);
@@ -53,6 +52,7 @@ public class DialogueUI : MonoBehaviour {
 
         yield return FadeRoutine(0f, 1f);
 
+        // --- ПЕЧАТЬ ТЕКСТА ---
         _isTyping = true;
         foreach (char letter in node.text.ToCharArray()) {
             if (_advanceRequested) {
@@ -65,20 +65,25 @@ public class DialogueUI : MonoBehaviour {
         _isTyping = false;
         _dialogueText.text = node.text;
 
+        // Текст напечатан. Ждем действий игрока.
+        _isTextFullyRevealed = true;
+        _advanceRequested = false; // Сбрасываем клик, который мог нажаться во время печати
+
+        // Если есть выборы
         if (node.choices != null && node.choices.Count > 0) {
             ShowChoices(node.choices);
             _isWaitingForChoice = true;
 
-            // Ждем, пока не выберут кнопку
             while (_selectedChoiceIndex == -1) {
                 yield return null;
             }
 
-            Debug.Log($"[UI] Игрок выбрал вариант: {_selectedChoiceIndex}");
             _isWaitingForChoice = false;
             _choicesContainer.gameObject.SetActive(false);
-        } else {
-            _continueHint.SetActive(true);
+        }
+        // Если выбора нет — ждем клика
+        else {
+            // Ждем, пока не попросят продолжить
             while (!_advanceRequested) {
                 yield return null;
             }
@@ -91,11 +96,18 @@ public class DialogueUI : MonoBehaviour {
     private void Update() {
         if (!gameObject.activeSelf) return;
 
-        // Если ждем выбора кнопки — игнорируем клики и пробел
+        // Если ждем выбора кнопки — игнорируем клики
         if (_isWaitingForChoice) return;
 
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)) {
-            _advanceRequested = true;
+            // Если текст еще печатается — первый клик просто открывает его полностью
+            if (_isTyping) {
+                _advanceRequested = true;
+            }
+            // Если текст уже открыт, но это реплика БЕЗ выбора — второй клик идет дальше
+            else if (_isTextFullyRevealed && (_choicesContainer.gameObject.activeSelf == false)) {
+                _advanceRequested = true;
+            }
         }
     }
 
@@ -113,10 +125,7 @@ public class DialogueUI : MonoBehaviour {
             if (btn != null) {
                 btn.onClick.AddListener(() => {
                     _selectedChoiceIndex = index;
-                    Debug.Log($"[UI] Кнопка нажата! Индекс: {index}");
                 });
-            } else {
-                Debug.LogError("На префабе кнопки НЕТ компонента Button!");
             }
         }
     }

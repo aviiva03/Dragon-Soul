@@ -62,9 +62,11 @@ public class DialogueManager : MonoBehaviour {
         // --- ЗАТЕМНЕНИЕ HUD (только для обычных) ---
         if (isStandardDialogue) {
             yield return FadeHUD(1f, 0f, _hudFadeDuration);
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
         }
+
+        // Разблокируем курсор для ЛЮБОГО диалога (чтобы можно было нажимать кнопки)
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
 
         // --- КАМЕРА ---
         if (dialogueCamera != null) {
@@ -128,12 +130,12 @@ public class DialogueManager : MonoBehaviour {
         if (_playerController != null) _playerController.enabled = true;
 
         // --- ВОЗВРАТ HUD ---
-        // Для кат-сцены HUD включает сам SwordShardsAction, чтобы не было задержек
         if (isStandardDialogue) {
             yield return FadeHUD(0f, 1f, _hudFadeDuration);
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
         }
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
 
         IsDialogueActive = false;
         if (objectToDestroy != null) Destroy(objectToDestroy);
