@@ -21,57 +21,69 @@ public class DialogueManager : MonoBehaviour {
         else Instance = this;
     }
 
-    // Добавили Transform playerTeleportPoint
+    // --- 1. ОБЫЧНЫЙ ДИАЛОГ (С телепортом и плавной камерой) ---
     public void StartDialogue(DialogueData dialogue, CinemachineVirtualCamera dialogueCamera, GameObject objectToDestroy = null, Transform playerTeleportPoint = null) {
         if (IsDialogueActive) return;
-        StartCoroutine(DialogueRoutine(dialogue, dialogueCamera, objectToDestroy, playerTeleportPoint));
+        StartCoroutine(DialogueRoutine(dialogue, dialogueCamera, objectToDestroy, playerTeleportPoint, true));
     }
 
-    private IEnumerator DialogueRoutine(DialogueData dialogue, CinemachineVirtualCamera dialogueCamera, GameObject objectToDestroy, Transform playerTeleportPoint) {
-        IsDialogueActive = true;
+    // --- 2. ДИАЛОГ ДЛЯ КАТ-СЦЕНЫ (Без телепорта, без управления камерой, без HUD) ---
+    public void StartCinematicDialogue(DialogueData dialogue) {
+        if (IsDialogueActive) return;
+        StartCoroutine(DialogueRoutine(dialogue, null, null, null, false));
+    }
 
-        // --- 1. СОХРАНЯЕМ СТАРУЮ ПОЗИЦИЮ И ТЕЛЕПОРТИРУЕМ ---
-        Vector3 originalPosition = Vector3.zero;
-        Quaternion originalRotation = Quaternion.identity;
-        CharacterController cc = null;
+    private IEnumerator DialogueRoutine(DialogueData dialogue, CinemachineVirtualCamera dialogueCamera, GameObject objectToDestroy, Transform playerTeleportPoint, bool isStandardDialogue) {
+        IsDialogueActive = true;
 
         if (_playerController != null) {
             _playerController.ForceStopForCinematic();
             _playerController.enabled = false;
+        }
 
-            // Запоминаем, где игрок был
+        // --- ТЕЛЕПОРТ (только для обычных диалогов) ---
+        Vector3 originalPosition = Vector3.zero;
+        Quaternion originalRotation = Quaternion.identity;
+        CharacterController cc = null;
+
+        if (isStandardDialogue && playerTeleportPoint != null && _playerController != null) {
             originalPosition = _playerController.transform.position;
             originalRotation = _playerController.transform.rotation;
 
-            // Если указана точка телепорта — переносим игрока
-            if (playerTeleportPoint != null) {
-                cc = _playerController.GetComponent<CharacterController>();
+            cc = _playerController.GetComponent<CharacterController>();
+            if (cc != null) cc.enabled = false;
 
-                // Отключаем коллайдер игрока, чтобы телепорт сработал
-                if (cc != null) cc.enabled = false;
+            _playerController.transform.position = playerTeleportPoint.position;
+            _playerController.transform.rotation = playerTeleportPoint.rotation;
 
-                _playerController.transform.position = playerTeleportPoint.position;
-                _playerController.transform.rotation = playerTeleportPoint.rotation;
-
-                if (cc != null) cc.enabled = true;
-            }
+            if (cc != null) cc.enabled = true;
         }
 
-        // 2. Скрываем HUD
-        yield return FadeHUD(1f, 0f, _hudFadeDuration);
+        // --- ЗАТЕМНЕНИЕ HUD (только для обычных) ---
+        if (isStandardDialogue) {
+            yield return FadeHUD(1f, 0f, _hudFadeDuration);
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
 
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-
-        // 3. Включаем камеру диалога
+        // --- КАМЕРА ---
         if (dialogueCamera != null) {
-            Camera.main.GetComponent<CinemachineBrain>().m_DefaultBlend.m_Time = 1.5f;
-            dialogueCamera.Priority = 20;
-            _playerCamera.Priority = 10;
-            yield return new WaitForSeconds(1.5f); // Ждем полета
+            CinemachineVirtualCamera[] allCameras = FindObjectsOfType<CinemachineVirtualCamera>();
+            foreach (var cam in allCameras) cam.enabled = false;
+
+            if (_playerCamera != null) _playerCamera.enabled = false;
+
+            dialogueCamera.enabled = true;
+            dialogueCamera.Priority = 50;
+
+            // Для обычного диалога — плавно (1.5 сек). Для кат-сцены — мгновенно (0).
+            Camera.main.GetComponent<CinemachineBrain>().m_DefaultBlend.m_Time = isStandardDialogue ? 1.5f : 0f;
+
+            if (isStandardDialogue) yield return new WaitForSeconds(1.5f);
+            else yield return null;
         }
 
-        // 4. Проходим по узлам
+        // --- УЗЛЫ ДИАЛОГА ---
         string currentNodeId = dialogue.startNodeId;
 
         while (!string.IsNullOrEmpty(currentNodeId) && currentNodeId != "END") {
@@ -91,33 +103,40 @@ public class DialogueManager : MonoBehaviour {
             }
         }
 
-        // 5. Выключаем камеру диалога
+        // --- ВОЗВРАТ КАМЕРЫ ---
         if (dialogueCamera != null) {
-            dialogueCamera.Priority = 5;
-            _playerCamera.Priority = 10;
-            yield return new WaitForSeconds(1.5f);
-        }
+            dialogueCamera.enabled = false;
 
-        // --- 6. ВОЗВРАЩАЕМ ИГРОКА НА МЕСТО ---
-        if (_playerController != null) {
-            if (playerTeleportPoint != null && cc != null) {
-                cc.enabled = false;
-                _playerController.transform.position = originalPosition;
-                _playerController.transform.rotation = originalRotation;
-                cc.enabled = true;
+            if (_playerCamera != null) {
+                _playerCamera.enabled = true;
+                _playerCamera.Priority = 10;
             }
-            _playerController.enabled = true;
+
+            Camera.main.GetComponent<CinemachineBrain>().m_DefaultBlend.m_Time = isStandardDialogue ? 1.5f : 0f;
+            if (isStandardDialogue) yield return new WaitForSeconds(1.5f);
+            else yield return null;
         }
 
-        yield return FadeHUD(0f, 1f, _hudFadeDuration);
+        // --- ТЕЛЕПОРТ ОБРАТНО (только для обычных) ---
+        if (isStandardDialogue && playerTeleportPoint != null && _playerController != null) {
+            if (cc != null) cc.enabled = false;
+            _playerController.transform.position = originalPosition;
+            _playerController.transform.rotation = originalRotation;
+            if (cc != null) cc.enabled = true;
+        }
 
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        if (_playerController != null) _playerController.enabled = true;
+
+        // --- ВОЗВРАТ HUD ---
+        // Для кат-сцены HUD включает сам SwordShardsAction, чтобы не было задержек
+        if (isStandardDialogue) {
+            yield return FadeHUD(0f, 1f, _hudFadeDuration);
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+
         IsDialogueActive = false;
-
-        if (objectToDestroy != null) {
-            Destroy(objectToDestroy);
-        }
+        if (objectToDestroy != null) Destroy(objectToDestroy);
     }
 
     private IEnumerator FadeHUD(float from, float to, float duration) {

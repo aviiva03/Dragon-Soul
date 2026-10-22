@@ -11,9 +11,10 @@ public class CursorLockManager : MonoBehaviour {
     }
 
     private void Update() {
-        // Если идет диалог или кат-сцена, вообще ничего не делаем с курсором
-        if (DialogueManager.Instance != null && DialogueManager.Instance.IsDialogueActive)
-            return;
+        PlayerController pc = FindObjectOfType<PlayerController>();
+        if (pc != null && !pc.enabled) return; // Если игрок отключен (катсцена) — ничего не делаем!
+
+        if (DialogueManager.Instance != null && DialogueManager.Instance.IsDialogueActive) return;
 
         // Esc — освободить курсор
         if (Input.GetKeyDown(KeyCode.Escape)) {

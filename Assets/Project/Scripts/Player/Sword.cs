@@ -20,7 +20,7 @@ public class Sword : MonoBehaviour {
     private void Awake() {
         _originalScale = transform.localScale;
         transform.localScale = Vector3.zero;
-        gameObject.SetActive(false);
+        gameObject.SetActive(false); // Меч скрыт до получения
     }
 
     /// <summary>

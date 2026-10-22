@@ -48,6 +48,7 @@ public class PlayerController : MonoBehaviour {
     public Vector2 MoveInput => _moveInput;
     public bool HasMoveInput => _moveInput.sqrMagnitude > 0.01f;
     public bool IsGrounded { get; private set; }
+    private bool HasSword => PlayerProgress.Instance != null && PlayerProgress.Instance.HasSword;
 
     public bool WantsToJump => _jumpPressedThisFrame && _coyoteTimer > 0f;
 
@@ -61,9 +62,12 @@ public class PlayerController : MonoBehaviour {
         HasMoveInput && IsGrounded && _stats.HasStamina(1f);
 
     public bool WantsLightAttack =>
-        _lightAttackPressedThisFrame && !IsAttacking;
+        HasSword && // Проверка на меч
+        _lightAttackPressedThisFrame &&
+        !IsAttacking;
 
     public bool WantsHeavyAttack =>
+        HasSword && // Проверка на меч
         _heavyAttackPressedThisFrame &&
         !IsAttacking &&
         _stats.HasStamina(_stats.HeavyAttackStaminaCost);
