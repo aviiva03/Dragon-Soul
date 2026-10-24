@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using Cinemachine;
 
@@ -85,16 +84,10 @@ public class DialogueManager : MonoBehaviour {
             DialogueNode node = dialogue.GetNode(currentNodeId);
             if (node == null) break;
 
-            // --- ЛОГИКА ЖЕСТИКУЛЯЦИИ ---
-            // Останавливаем жесты у всех (чтобы они не спамили)
             if (charactersToAnimate != null) {
                 foreach (var character in charactersToAnimate) {
                     if (character != null) character.StopTalking();
                 }
-            }
-
-            // Включаем жест только тому, кто сейчас говорит (с шансом 50/50)
-            if (charactersToAnimate != null) {
                 foreach (var character in charactersToAnimate) {
                     if (character != null && character.CharacterName == node.speakerName) {
                         character.StartTalking();
@@ -102,9 +95,7 @@ public class DialogueManager : MonoBehaviour {
                     }
                 }
             }
-            // --------------------------
 
-            // Показываем текст
             yield return _dialogueUI.ShowNodeRoutine(node);
 
             if (node.choices != null && node.choices.Count > 0) {
@@ -115,7 +106,6 @@ public class DialogueManager : MonoBehaviour {
             }
         }
 
-        // Конец диалога - выключаем всех
         if (charactersToAnimate != null) {
             foreach (var character in charactersToAnimate) {
                 if (character != null) character.StopTalking();

@@ -11,8 +11,8 @@ public class SwordShardsAction : InteractAction {
     [SerializeField] private CinemachineVirtualCamera _pastCamera;
 
     [Header("Characters")]
-    [SerializeField] private TalkingAnimator _fatherAnim; // Ссылка на аниматор Отца
-    [SerializeField] private TalkingAnimator _dashenYoungAnim; // Ссылка на аниматор Дэшэна
+    [SerializeField] private TalkingAnimator _fatherAnim;
+    [SerializeField] private TalkingAnimator _dashenYoungAnim;
 
     [Header("UI")]
     [SerializeField] private CanvasGroup _fadeGroup;
@@ -50,7 +50,6 @@ public class SwordShardsAction : InteractAction {
     }
 
     private IEnumerator CinematicSequence(PlayerController player) {
-        // ЭТАП 1: ВХОД В ПРОШЛОЕ
         SetPlayerVisible(player, false);
         if (_hudGroup != null) _hudGroup.alpha = 0f;
 
@@ -92,32 +91,21 @@ public class SwordShardsAction : InteractAction {
         _titleText.gameObject.SetActive(false);
         yield return FadeUI(_fadeGroup, 1f, 0f, _fadeTime);
 
-        // ЭТАП 2: ДИАЛОГ
-        // Собираем персонажей в массив и передаем в менеджер
         TalkingAnimator[] talkers = new TalkingAnimator[] { _fatherAnim, _dashenYoungAnim };
-
         DialogueManager.Instance.StartCinematicDialogue(_memoryDialogue, talkers);
 
         while (DialogueManager.Instance.IsDialogueActive) {
             yield return null;
         }
 
-        // ЭТАП 3: МИНИ-ИГРА
-        Debug.Log("[Shards] Запуск мини-игры...");
-
-        // ОТКЛЮЧАЕМ СЦЕНУ ПРОШЛОГО (скрываем Отца и Дэшэна)
         if (_pastSceneRoot != null) _pastSceneRoot.SetActive(false);
 
         bool puzzleFinished = false;
-
         if (SwordPuzzleManager.Instance != null) {
-            SwordPuzzleManager.Instance.OnPuzzleCompleted += () => {
-                puzzleFinished = true;
-            };
-
+            SwordPuzzleManager.Instance.OnPuzzleCompleted += () => puzzleFinished = true;
             SwordPuzzleManager.Instance.StartPuzzle();
         } else {
-            Debug.LogError("SwordPuzzleManager не найден на сцене!");
+            Debug.LogError("[Shards] SwordPuzzleManager не найден на сцене!");
             puzzleFinished = true;
         }
 
@@ -125,18 +113,15 @@ public class SwordShardsAction : InteractAction {
             yield return null;
         }
 
-        Debug.Log("[Shards] Мини-игра успешно завершена!");
-
-        // ЭТАП 4: ВОЗВРАЩЕНИЕ
         yield return FadeUI(_fadeGroup, 0f, 1f, _fadeTime);
 
-        if (_pastSceneRoot != null) _pastSceneRoot.SetActive(false);
         if (_filterGroup != null) _filterGroup.gameObject.SetActive(false);
 
         if (_pastCamera != null) _pastCamera.enabled = false;
-        if (_playerCam != null) _playerCam.enabled = true;
-
-        if (_playerCam != null) _playerCam.Priority = 10;
+        if (_playerCam != null) {
+            _playerCam.enabled = true;
+            _playerCam.Priority = 10;
+        }
 
         if (_brain != null) {
             _brain.m_DefaultBlend.m_Time = 0f;
@@ -163,8 +148,10 @@ public class SwordShardsAction : InteractAction {
 
         if (player != null) {
             player.enabled = true;
-            if (player.Sword != null) player.Sword.enabled = true;
-            player.Sword.ShowOnPickup();
+            if (player.Sword != null) {
+                player.Sword.enabled = true;
+                player.Sword.ShowOnPickup();
+            }
         }
 
         if (PlayerProgress.Instance != null) PlayerProgress.Instance.GiveSword();

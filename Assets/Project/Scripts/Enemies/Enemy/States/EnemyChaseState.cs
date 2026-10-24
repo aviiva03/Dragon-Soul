@@ -35,8 +35,8 @@ public class EnemyChaseState : State {
         _enemy.RotateTowardsPlayer(15f);
 
         float distance = _enemy.DistanceToPlayer();
-        float preferred = _enemy.PreferredDistence;
-        float tolerance = _enemy.DistenceTolerance;
+        float preferred = _enemy.PreferredDistance;
+        float tolerance = _enemy.DistanceTolerance;
 
         if (_enemy.CanAttack()) {
             ComboData combo = _enemy.SimpleAttackSelector.SelectCombo(distance);
@@ -108,7 +108,7 @@ public class EnemyChaseState : State {
 
         float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
         Vector3 offset = new Vector3(Mathf.Sin(angle), 0f, Mathf.Cos(angle));
-        offset *= _enemy.PreferredDistence;
+        offset *= _enemy.PreferredDistance;
 
         _strafeTarget = _enemy.Player.position + offset;
     }

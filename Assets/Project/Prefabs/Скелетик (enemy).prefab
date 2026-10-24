@@ -1580,7 +1580,6 @@ GameObject:
   - component: {fileID: 7499181951291622889}
   - component: {fileID: 7404423253010123437}
   - component: {fileID: 423529006876007634}
-  - component: {fileID: 5483902962717490882}
   m_Layer: 7
   m_Name: "\u0421\u043A\u0435\u043B\u0435\u0442\u0438\u043A (enemy)"
   m_TagString: Untagged
@@ -1733,19 +1732,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _maxHealth: 100
---- !u!114 &5483902962717490882
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4102054305672091621}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b4ffa43dd2e04dd46b5699674b30fcde, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _health: {fileID: 423529006876007634}
 --- !u!1 &4139584173899308374
 GameObject:
   m_ObjectHideFlags: 0

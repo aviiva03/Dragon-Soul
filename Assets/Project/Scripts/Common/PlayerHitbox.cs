@@ -8,12 +8,10 @@ public class PlayerHitbox : MonoBehaviour {
     [SerializeField] private LayerMask _hitLayers;
 
     [Header("Debug")]
-    [SerializeField] private bool _debugMode = true;
+    [SerializeField] private bool _drawGizmos = true;
 
     private bool _isActive;
     private float _currentDamage;
-    private Vector3 _hitDirection;
-
     private readonly HashSet<IDamageable> _alreadyHit = new HashSet<IDamageable>();
 
     public bool IsActive => _isActive;
@@ -24,13 +22,9 @@ public class PlayerHitbox : MonoBehaviour {
 
         _isActive = true;
         _currentDamage = damage;
-        _hitDirection = hitDirection.normalized;
         _alreadyHit.Clear();
 
         PerformHitCheck();
-
-        if (_debugMode)
-            Debug.Log($"[HITBOX] Activated, damage={damage}, dir={_hitDirection}");
     }
 
     public void Deactivate() {
@@ -39,29 +33,17 @@ public class PlayerHitbox : MonoBehaviour {
     }
 
     private void PerformHitCheck() {
-        Collider[] hits = Physics.OverlapSphere(
-            transform.position,
-            _radius,
-            _hitLayers,
-            QueryTriggerInteraction.Collide);
+        Collider[] hits = Physics.OverlapSphere(transform.position, _radius, _hitLayers, QueryTriggerInteraction.Collide);
 
         foreach (var col in hits) {
             IDamageable damageable = FindDamageable(col);
-            if (damageable == null) continue;
-            if (!damageable.IsAlive) continue;
-            if (_alreadyHit.Contains(damageable)) continue;
+            if (damageable == null || !damageable.IsAlive || _alreadyHit.Contains(damageable)) continue;
 
             _alreadyHit.Add(damageable);
-
             Vector3 hitPoint = col.ClosestPoint(transform.position);
-
-            // ¬Œ“ √À¿¬ÕŒ≈ »—œ–¿¬À≈Õ»≈:
-            // œË‚Ó‰ËÏ float damage Í int (Health ËÒÔÓÎ¸ÁÛÂÚ int)
             int intDamage = Mathf.RoundToInt(_currentDamage);
+            
             damageable.TakeDamage(intDamage, hitPoint);
-
-            if (_debugMode)
-                Debug.Log($"[HITBOX] Hit for {intDamage} to {col.name}");
         }
     }
 
@@ -79,11 +61,9 @@ public class PlayerHitbox : MonoBehaviour {
     }
 
     private void OnDrawGizmos() {
-        if (!_debugMode) return;
+        if (!_drawGizmos) return;
 
-        Gizmos.color = _isActive
-            ? new Color(1f, 0f, 0f, 0.7f)
-            : new Color(1f, 1f, 0f, 0.3f);
+        Gizmos.color = _isActive ? new Color(1f, 0f, 0f, 0.7f) : new Color(1f, 1f, 0f, 0.3f);
         Gizmos.DrawWireSphere(transform.position, _radius);
 
         if (_isActive) {

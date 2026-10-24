@@ -24,20 +24,13 @@ public abstract class EnemyBase : MonoBehaviour {
     public Health Health => _health;
 
     protected virtual void Start() {
-        ValidateReferences();
+        if (_player == null) Debug.LogError($"[{name}] _player не назначен!", this);
+        if (_animator == null) Debug.LogError($"[{name}] _animator не назначен!", this);
+        if (_agent == null) Debug.LogError($"[{name}] _agent не назначен!", this);
     }
 
     protected virtual void Update() {
         CurrentState?.Update();
-        OnUpdate();
-    }
-
-    protected virtual void OnUpdate() { }
-
-    private void ValidateReferences() {
-        if (_player == null) Debug.LogError($"[{name}] _player не назначен!", this);
-        if (_animator == null) Debug.LogError($"[{name}] _animator не назначен!", this);
-        if (_agent == null) Debug.LogError($"[{name}] _agent не назначен!", this);
     }
 
     public void ChangeState(State newState) {

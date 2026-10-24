@@ -11,8 +11,8 @@ public class EnemyController : EnemyBase {
 
     [Header("Combat")]
     [SerializeField] private float _attackRange = 2f;
-    [SerializeField] private float _preferredDistence = 4f;
-    [SerializeField] private float _distenceTolerance = 1f;
+    [SerializeField] private float _preferredDistance = 4f;
+    [SerializeField] private float _distanceTolerance = 1f;
     [SerializeField] private float _globalAttackCooldown = 2.0f;
     [SerializeField] private SimpleAttackSelector _attackSelector;
 
@@ -31,8 +31,8 @@ public class EnemyController : EnemyBase {
     public float ChaseSpeed => _chaseSpeed;
     public Transform[] PatrolPoints => _patrolPoints;
     public float AttackRange => _attackRange;
-    public float PreferredDistence => _preferredDistence;
-    public float DistenceTolerance => _distenceTolerance;
+    public float PreferredDistance => _preferredDistance;
+    public float DistanceTolerance => _distanceTolerance;
     public SimpleAttackSelector SimpleAttackSelector => _attackSelector;
     public ComboData PendingCombo { get; private set; }
 
@@ -68,15 +68,11 @@ public class EnemyController : EnemyBase {
         }
     }
 
-    private void HandleDeath() {
-        ToDead();
-    }
+    private void HandleDeath() => ToDead();
 
     private void HandleDamaged(int amount, Vector3 point) {
         if (!Health.IsAlive) return;
-        if (CurrentState == _attackState) return;
-        if (CurrentState == _deadState) return;
-        if (CurrentState == _hitState) return;
+        if (CurrentState == _attackState || CurrentState == _deadState || CurrentState == _hitState) return;
 
         if (Time.time - _lastHitTime < HitCooldown) return;
         _lastHitTime = Time.time;
@@ -84,19 +80,9 @@ public class EnemyController : EnemyBase {
         ToHit();
     }
 
-    public bool CanAttack() {
-        return Time.time - _lastAttackTime >= _globalAttackCooldown;
-    }
+    public bool CanAttack() => Time.time - _lastAttackTime >= _globalAttackCooldown;
 
-    public void SetPendingCombo(ComboData combo) {
-        PendingCombo = combo;
-    }
-
-    public void ClearPendingCombo() {
-        PendingCombo = null;
-    }
-
-    public void NotifyAttackFinished() {
-        _lastAttackTime = Time.time;
-    }
+    public void SetPendingCombo(ComboData combo) => PendingCombo = combo;
+    public void ClearPendingCombo() => PendingCombo = null;
+    public void NotifyAttackFinished() => _lastAttackTime = Time.time;
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 public class PlayerProgress : MonoBehaviour {
     public static PlayerProgress Instance { get; private set; }
 
-    public bool HasSword { get; private set; } = false;
+    public bool HasSword { get; private set; } = true;
 
     public event Action OnSwordObtained;
 

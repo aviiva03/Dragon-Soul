@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -52,7 +51,6 @@ public class DialogueUI : MonoBehaviour {
 
         yield return FadeRoutine(0f, 1f);
 
-        // --- ПЕЧАТЬ ТЕКСТА ---
         _isTyping = true;
         foreach (char letter in node.text.ToCharArray()) {
             if (_advanceRequested) {
@@ -65,11 +63,9 @@ public class DialogueUI : MonoBehaviour {
         _isTyping = false;
         _dialogueText.text = node.text;
 
-        // Текст напечатан. Ждем действий игрока.
         _isTextFullyRevealed = true;
-        _advanceRequested = false; // Сбрасываем клик, который мог нажаться во время печати
+        _advanceRequested = false;
 
-        // Если есть выборы
         if (node.choices != null && node.choices.Count > 0) {
             ShowChoices(node.choices);
             _isWaitingForChoice = true;
@@ -81,9 +77,7 @@ public class DialogueUI : MonoBehaviour {
             _isWaitingForChoice = false;
             _choicesContainer.gameObject.SetActive(false);
         }
-        // Если выбора нет — ждем клика
         else {
-            // Ждем, пока не попросят продолжить
             while (!_advanceRequested) {
                 yield return null;
             }
@@ -95,16 +89,12 @@ public class DialogueUI : MonoBehaviour {
 
     private void Update() {
         if (!gameObject.activeSelf) return;
-
-        // Если ждем выбора кнопки — игнорируем клики
         if (_isWaitingForChoice) return;
 
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)) {
-            // Если текст еще печатается — первый клик просто открывает его полностью
             if (_isTyping) {
                 _advanceRequested = true;
             }
-            // Если текст уже открыт, но это реплика БЕЗ выбора — второй клик идет дальше
             else if (_isTextFullyRevealed && (_choicesContainer.gameObject.activeSelf == false)) {
                 _advanceRequested = true;
             }

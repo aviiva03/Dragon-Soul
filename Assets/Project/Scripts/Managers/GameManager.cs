@@ -35,30 +35,23 @@ public class GameManager : MonoBehaviour {
     private IEnumerator RespawnRoutine() {
         var movement = _player.GetComponent<PlayerController>();
         var animator = _player.GetComponent<PlayerAnimator>();
-        if (movement != null && animator != null) {
-            movement.enabled = false;
-            animator.enabled = false;
-        }
+        if (movement != null) movement.enabled = false;
+        if (animator != null) animator.enabled = false;
 
         yield return new WaitForSecondsRealtime(1.5f);
 
-        var controller = _player.GetComponent<CharacterController>();
-        bool hadcontroller = controller != null;
-        if (hadcontroller)
-            controller.enabled = false;
+        var cc = _player.GetComponent<CharacterController>();
+        bool hadCC = cc != null;
+        if (hadCC) cc.enabled = false;
 
         _player.position = _playerStartPoint.position;
         _player.rotation = _playerStartPoint.rotation;
 
-        if (hadcontroller)
-            controller.enabled = true;
+        if (hadCC) cc.enabled = true;
 
         OnPlayerRespawn?.Invoke();
-        Debug.Log("Игрок респавнится");
 
-        if (movement != null && animator != null) {
-            movement.enabled = true;
-            animator.enabled = true;
-        }
+        if (movement != null) movement.enabled = true;
+        if (animator != null) animator.enabled = true;
     }
 }

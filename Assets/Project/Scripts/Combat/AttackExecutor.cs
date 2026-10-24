@@ -19,7 +19,7 @@ public class AttackExecutor {
 
     public void Start(AttackData data) {
         if (data == null) {
-            Debug.LogError("AttackExecutor: data is null! Атака не запущена.");
+            Debug.LogError("[AttackExecutor] Данные атаки (AttackData) равны null! Проверь скрипт.");
             _data = null;
             return;
         }
@@ -41,8 +41,7 @@ public class AttackExecutor {
         switch (_phase) {
             case Phase.Windup:
                 _enemy.RotateTowardsPlayer(12f);
-                if (_timer >= _data.windupTime)
-                    Next(Phase.Strike);
+                if (_timer >= _data.windupTime) Next(Phase.Strike);
                 break;
 
             case Phase.Strike:
@@ -51,8 +50,7 @@ public class AttackExecutor {
                     ExecuteMovement();
                     OnHitMoment?.Invoke();
                 }
-                if (_timer >= _data.strikeTime)
-                    Next(Phase.Recovery);
+                if (_timer >= _data.strikeTime) Next(Phase.Recovery);
                 break;
 
             case Phase.Recovery:
@@ -75,7 +73,6 @@ public class AttackExecutor {
         if (_data.forwardJumpDistance <= 0f) return;
 
         Vector3 direction;
-
         if (_data.jumpToPlayer) {
             direction = _enemy.Player.position - _enemy.transform.position;
             direction.y = 0f;

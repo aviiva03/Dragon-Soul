@@ -14,12 +14,10 @@ public class EnemyHitState : State {
     public override void Enter() {
         _enemy.StopMoving();
 
-        // Гасим все локомоции
         _enemy.Animator.SetBool("isIdle", false);
         _enemy.Animator.SetBool("isWalking", false);
         _enemy.Animator.SetBool("isRunning", false);
 
-        // Триггер анимации
         _enemy.Animator.SetTrigger("hit");
 
         _timer = 0f;
@@ -29,7 +27,6 @@ public class EnemyHitState : State {
         _timer += Time.deltaTime;
 
         if (_timer >= HitDuration) {
-            // Возврат в бой или Idle
             if (_enemy.DistanceToPlayer() <= _enemy.DetectionRange && _enemy.CanSeePlayer())
                 _enemy.ToChase();
             else

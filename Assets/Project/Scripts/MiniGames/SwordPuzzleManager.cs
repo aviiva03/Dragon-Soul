@@ -22,6 +22,8 @@ public class SwordPuzzleManager : MonoBehaviour {
     private int _piecesPlaced = 0;
     private int _totalPieces = 0;
 
+    public bool IsPuzzleActive => _puzzlePanel != null && _puzzlePanel.activeSelf;
+
     private void Awake() {
         if (Instance != null && Instance != this) Destroy(gameObject);
         else Instance = this;

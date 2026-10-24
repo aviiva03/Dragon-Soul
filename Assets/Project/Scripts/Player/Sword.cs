@@ -17,13 +17,12 @@ public class Sword : MonoBehaviour {
     private Coroutine _fadeRoutine;
     private Coroutine _idleTimerRoutine;
 
-    private int _colorPropertyId = -1; // Ищем автоматически
+    private int _colorPropertyId = -1;
 
     private void Awake() {
         _renderers = GetComponentsInChildren<Renderer>();
         _mpb = new MaterialPropertyBlock();
 
-        // Ищем правильное имя свойства цвета
         if (_renderers.Length > 0) {
             Material mat = _renderers[0].sharedMaterial;
             if (mat.HasProperty("_BaseColor")) _colorPropertyId = Shader.PropertyToID("_BaseColor");
@@ -31,7 +30,7 @@ public class Sword : MonoBehaviour {
             else Debug.LogError("[Sword] Не удалось найти свойство цвета в материале! (Нужен _BaseColor или _Color)");
         }
 
-        SetAlpha(0f); // Изначально прозрачный
+        SetAlpha(0f);
     }
 
     public void Appear() {
@@ -41,7 +40,12 @@ public class Sword : MonoBehaviour {
             _audioSource.PlayOneShot(_appearSound);
 
         if (_fadeRoutine != null) StopCoroutine(_fadeRoutine);
-        _fadeRoutine = StartCoroutine(FadeRoutine(1f)); // Проявляем
+        _fadeRoutine = StartCoroutine(FadeRoutine(1f));
+    }
+
+    public void ShowOnPickup() {
+        Appear();
+        AttackFinished();
     }
 
     public void AttackFinished() {
@@ -59,12 +63,11 @@ public class Sword : MonoBehaviour {
             _audioSource.PlayOneShot(_disappearSound);
 
         if (_fadeRoutine != null) StopCoroutine(_fadeRoutine);
-        _fadeRoutine = StartCoroutine(FadeRoutine(0f)); // Растворяем
+        _fadeRoutine = StartCoroutine(FadeRoutine(0f));
     }
 
     private IEnumerator FadeRoutine(float targetAlpha) {
         if (_colorPropertyId == -1) {
-            // Если цвет не найден, просто выключаем объект
             gameObject.SetActive(targetAlpha > 0.5f);
             yield break;
         }
@@ -103,17 +106,5 @@ public class Sword : MonoBehaviour {
             _mpb.SetColor(_colorPropertyId, c);
             r.SetPropertyBlock(_mpb);
         }
-    }
-
-    /// <summary>
-    /// Принудительно показывает меч на пару секунд при получении, 
-    /// а потом запускает таймер на исчезновение.
-    /// </summary>
-    public void ShowOnPickup() {
-        // Проявляем меч
-        Appear();
-
-        // Запускаем таймер бездействия, чтобы он скрылся через несколько секунд
-        AttackFinished();
     }
 }

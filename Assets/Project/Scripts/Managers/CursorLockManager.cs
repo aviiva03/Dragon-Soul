@@ -6,22 +6,25 @@ public class CursorLockManager : MonoBehaviour {
     [SerializeField] private bool _lockOnStart = true;
 
     private void Start() {
-        if (_lockOnStart)
-            LockCursor();
+        if (_lockOnStart) LockCursor();
     }
 
     private void Update() {
-        PlayerController pc = FindObjectOfType<PlayerController>();
-        if (pc != null && !pc.enabled) return; // Если игрок отключен (катсцена) — ничего не делаем!
-
+        // 1. Если идет диалог/катсцена - не трогаем курсор
         if (DialogueManager.Instance != null && DialogueManager.Instance.IsDialogueActive) return;
 
-        // Esc — освободить курсор
+        // 2. Если открыт пазл - не трогаем курсор
+        if (SwordPuzzleManager.Instance != null && SwordPuzzleManager.Instance.IsPuzzleActive) {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            return;
+        }
+
+        // 3. Обычная логика
         if (Input.GetKeyDown(KeyCode.Escape)) {
             UnlockCursor();
         }
 
-        // Клик по экрану — снова захватить (если игра не на паузе)
         if (Input.GetMouseButtonDown(0) && Cursor.lockState != CursorLockMode.Locked) {
             LockCursor();
         }

@@ -3,7 +3,7 @@ using UnityEngine;
 public class BossController : EnemyBase {
 
     [Header("Combat")]
-    [SerializeField] private float _maxAttackRange = 10f;
+    [SerializeField] private float _maxAttackRange = 15f;
     [SerializeField] private float _preferredDistance = 6f;
     [SerializeField] private float _distanceTolerance = 1.5f;
     [SerializeField] private float _globalAttackCooldown = 2.5f;
@@ -37,20 +37,16 @@ public class BossController : EnemyBase {
         _combatState = new CombatState(this);
         _deadState = new BossDeadState(this);
 
-        if (Health != null)
-            Health.OnDied += HandleDeath;
+        if (Health != null) Health.OnDied += HandleDeath;
 
         ChangeState(_dormantState);
     }
 
     private void OnDestroy() {
-        if (Health != null)
-            Health.OnDied -= HandleDeath;
+        if (Health != null) Health.OnDied -= HandleDeath;
     }
 
-    private void HandleDeath() {
-        ToDead();
-    }
+    private void HandleDeath() => ToDead();
 
     public bool CanAttack() {
         float mult = 1f;
@@ -60,7 +56,7 @@ public class BossController : EnemyBase {
         return Time.time - _lastAttackTime >= _globalAttackCooldown * mult;
     }
 
-    public void NotifyAttackFinished() { _lastAttackTime = Time.time; }
+    public void NotifyAttackFinished() => _lastAttackTime = Time.time;
 
     public float GetCurrentSpeed() {
         float mult = 1f;
