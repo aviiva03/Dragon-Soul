@@ -14,7 +14,7 @@ public class PlayerProgress : MonoBehaviour {
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject); // Не удалять при смене сцен
+        DontDestroyOnLoad(gameObject);
     }
 
     public void GiveSword() {

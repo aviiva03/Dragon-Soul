@@ -3,38 +3,25 @@ using UnityEngine.UI;
 using TMPro;
 
 public class BossHealthBarUI : MonoBehaviour {
-
-    [Header("References")]
-    [SerializeField] private Health _bossHealth;
+    [Header("UI Elements")]
     [SerializeField] private Image _fillImage;
     [SerializeField] private TMP_Text _bossNameText;
     [SerializeField] private CanvasGroup _canvasGroup;
 
-    [Header("Settings")]
-    [SerializeField] private string _bossName = "Wandering Undead";
-    [SerializeField] private bool _hideWhenFull = false;
-    [SerializeField] private float _fadeDuration = 0.4f;
+    private Health _bossHealth;
 
-    private void Start() {
-        if (_bossHealth == null) {
-            Debug.LogError($"[{name}] _bossHealth не назначен!");
-            return;
-        }
+    public void Setup(Health health, string bossName) {
+        _bossHealth = health;
+        _bossNameText.text = bossName;
 
         _bossHealth.OnHealthChanged += UpdateBar;
         _bossHealth.OnDied += HandleDeath;
 
-        if (_bossNameText != null)
-            _bossNameText.text = _bossName;
-
-        // Начальное значение
         UpdateBar(_bossHealth.Current, _bossHealth.Max);
+        _canvasGroup.alpha = 0f; // Начинаем с прозрачного
 
-        // Опционально — скрыть, пока полное HP
-        if (_hideWhenFull && _canvasGroup != null)
-            _canvasGroup.alpha = 0f;
-        else if (_canvasGroup != null)
-            _canvasGroup.alpha = 1f;
+        // Плавное появление
+        StartCoroutine(FadeIn());
     }
 
     private void OnDestroy() {
@@ -45,31 +32,31 @@ public class BossHealthBarUI : MonoBehaviour {
     }
 
     private void UpdateBar(int current, int max) {
-        if (_fillImage == null) return;
-
         float percent = max > 0 ? (float)current / max : 0f;
         _fillImage.fillAmount = percent;
-
-        // Показать при первом уроне
-        if (_hideWhenFull && _canvasGroup != null && percent < 1f)
-            _canvasGroup.alpha = 1f;
     }
 
     private void HandleDeath() {
-        if (_canvasGroup != null)
-            StartCoroutine(FadeOut());
+        StartCoroutine(FadeOutAndDestroy());
     }
 
-    private System.Collections.IEnumerator FadeOut() {
-        float elapsed = 0f;
-        float startAlpha = _canvasGroup.alpha;
-
-        while (elapsed < _fadeDuration) {
-            elapsed += Time.unscaledDeltaTime;
-            _canvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, elapsed / _fadeDuration);
+    private System.Collections.IEnumerator FadeIn() {
+        float t = 0;
+        while (t < 0.3f) {
+            t += Time.unscaledDeltaTime;
+            _canvasGroup.alpha = Mathf.Lerp(0f, 1f, t / 0.3f);
             yield return null;
         }
+        _canvasGroup.alpha = 1f;
+    }
 
-        _canvasGroup.alpha = 0f;
+    private System.Collections.IEnumerator FadeOutAndDestroy() {
+        float t = 0;
+        while (t < 0.4f) {
+            t += Time.unscaledDeltaTime;
+            _canvasGroup.alpha = Mathf.Lerp(1f, 0f, t / 0.4f);
+            yield return null;
+        }
+        Destroy(gameObject);
     }
 }

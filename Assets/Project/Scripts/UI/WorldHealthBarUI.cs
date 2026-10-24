@@ -1,3 +1,4 @@
+using Cinemachine;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -32,11 +33,17 @@ public class WorldHealthBarUI : MonoBehaviour {
     }
 
     private void LateUpdate() {
-        // Поворачиваем плашку к камере (billboard)
-        if (_cameraTransform != null) {
-            transform.LookAt(
-                transform.position + _cameraTransform.forward,
-                _cameraTransform.up);
+        Transform targetCamera = null;
+
+        var brain = Camera.main.GetComponent<CinemachineBrain>();
+        if (brain != null && brain.ActiveVirtualCamera != null) {
+            targetCamera = brain.ActiveVirtualCamera.VirtualCameraGameObject.transform;
+        } else if (Camera.main != null) {
+            targetCamera = Camera.main.transform;
+        }
+
+        if (targetCamera != null) {
+            transform.rotation = targetCamera.rotation;
         }
     }
 
