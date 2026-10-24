@@ -17,19 +17,19 @@ public class PlayerLightAttackState : PlayerState {
         _hasHit = false;
 
         Controller.SetAttacking(true);
-        Controller.Sword.Appear();
 
-        // Поворот в сторону ввода (или камеры)
         Vector3 aimDirection = Controller.GetCameraRelativeMoveDirection();
         if (aimDirection.sqrMagnitude < 0.01f)
             aimDirection = Controller.CameraRef.PlanarForward;
         Controller.transform.rotation = Quaternion.LookRotation(aimDirection);
 
-        // Плавный шаг вперёд
         Controller.StartStep(
             aimDirection,
             Stats.LightAttackStepDistance,
             Stats.LightAttackStepDuration);
+
+        // Показываем меч при начале атаки
+        if (Controller.Sword != null) Controller.Sword.Appear();
 
         Animator.PlayLightAttack(Controller.LightAttackComboIndex);
     }
@@ -37,27 +37,23 @@ public class PlayerLightAttackState : PlayerState {
     public override void Update() {
         _attackTimeLeft -= Time.deltaTime;
 
-        // Падение — прерываем
         if (!Controller.IsGrounded) {
             Controller.SetAttacking(false);
             StateMachine.ChangeState(Factory.Fall);
             return;
         }
 
-        // Хитбокс
         float elapsed = _attackDuration - _attackTimeLeft;
         if (!_hasHit && elapsed >= _attackDuration * 0.4f) {
             _hasHit = true;
             PerformHitCheck();
         }
 
-        // Прерывание на тяжёлую
         if (Controller.WantsHeavyAttack) {
             StateMachine.ChangeState(Factory.HeavyAttack);
             return;
         }
 
-        // Конец атаки
         if (_attackTimeLeft <= 0f) {
             Controller.SetAttacking(false);
 
@@ -76,13 +72,8 @@ public class PlayerLightAttackState : PlayerState {
 
     public override void Exit() {
         Controller.SetAttacking(false);
-
-        Controller.StartCoroutine(DisappearDelayed(0.1f));
-    }
-
-    private System.Collections.IEnumerator DisappearDelayed(float delay) {
-        yield return new WaitForSeconds(delay);
-        Controller.Sword.Disappear();
+        // Говорим мечу, что атака закончилась (запустится таймер на исчезновение)
+        if (Controller.Sword != null) Controller.Sword.AttackFinished();
     }
 
     private void PerformHitCheck() {
@@ -92,9 +83,6 @@ public class PlayerLightAttackState : PlayerState {
         float radius = Stats.LightAttackHitboxRadius;
 
         Controller.Hitbox.Activate(damage, Controller.transform.forward);
-
-        Debug.Log($"[ATTACK] Light hit #{Controller.LightAttackComboIndex + 1}, " +
-                  $"damage={damage}, radius={radius}");
     }
 
     private void ReturnToLocomotion() {

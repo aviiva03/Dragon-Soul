@@ -3,78 +3,117 @@ using UnityEngine;
 
 public class Sword : MonoBehaviour {
 
-    [Header("Appearance")]
-    [SerializeField] private float _appearDuration = 0.15f;
-    [SerializeField] private float _disappearDuration = 0.2f;
-    [SerializeField] private AnimationCurve _appearCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
-    [SerializeField] private AnimationCurve _disappearCurve = AnimationCurve.EaseInOut(0, 1, 1, 0);
-
-    [Header("Audio")]
+    [Header("References")]
     [SerializeField] private AudioSource _audioSource;
     [SerializeField] private AudioClip _appearSound;
     [SerializeField] private AudioClip _disappearSound;
 
-    private Vector3 _originalScale;
-    private Coroutine _scaleRoutine;
+    [Header("Fade Settings")]
+    [SerializeField] private float _fadeDuration = 0.3f;
+    [SerializeField] private float _idleTimeToDisappear = 3f;
+
+    private Renderer[] _renderers;
+    private MaterialPropertyBlock _mpb;
+    private Coroutine _fadeRoutine;
+    private Coroutine _idleTimerRoutine;
+
+    private int _colorPropertyId = -1; // Ищем автоматически
 
     private void Awake() {
-        _originalScale = transform.localScale;
-        transform.localScale = Vector3.zero;
-        gameObject.SetActive(false); // Меч скрыт до получения
+        _renderers = GetComponentsInChildren<Renderer>();
+        _mpb = new MaterialPropertyBlock();
+
+        // Ищем правильное имя свойства цвета
+        if (_renderers.Length > 0) {
+            Material mat = _renderers[0].sharedMaterial;
+            if (mat.HasProperty("_BaseColor")) _colorPropertyId = Shader.PropertyToID("_BaseColor");
+            else if (mat.HasProperty("_Color")) _colorPropertyId = Shader.PropertyToID("_Color");
+            else Debug.LogError("[Sword] Не удалось найти свойство цвета в материале! (Нужен _BaseColor или _Color)");
+        }
+
+        SetAlpha(0f); // Изначально прозрачный
     }
 
-    /// <summary>
-    /// Показать меч с анимацией появления.
-    /// </summary>
     public void Appear() {
-        if (gameObject.activeSelf) return;
-
-        gameObject.SetActive(true);
+        if (_idleTimerRoutine != null) StopCoroutine(_idleTimerRoutine);
 
         if (_audioSource != null && _appearSound != null)
             _audioSource.PlayOneShot(_appearSound);
 
-        if (_scaleRoutine != null)
-            StopCoroutine(_scaleRoutine);
-
-        _scaleRoutine = StartCoroutine(ScaleRoutine(
-            Vector3.zero, _originalScale, _appearDuration, _appearCurve));
+        if (_fadeRoutine != null) StopCoroutine(_fadeRoutine);
+        _fadeRoutine = StartCoroutine(FadeRoutine(1f)); // Проявляем
     }
 
-    /// <summary>
-    /// Скрыть меч с анимацией исчезновения.
-    /// </summary>
-    public void Disappear() {
-        if (!gameObject.activeSelf) return;
+    public void AttackFinished() {
+        if (_idleTimerRoutine != null) StopCoroutine(_idleTimerRoutine);
+        _idleTimerRoutine = StartCoroutine(IdleTimerRoutine());
+    }
 
+    private IEnumerator IdleTimerRoutine() {
+        yield return new WaitForSeconds(_idleTimeToDisappear);
+        Disappear();
+    }
+
+    public void Disappear() {
         if (_audioSource != null && _disappearSound != null)
             _audioSource.PlayOneShot(_disappearSound);
 
-        if (_scaleRoutine != null)
-            StopCoroutine(_scaleRoutine);
-
-        _scaleRoutine = StartCoroutine(ScaleRoutine(
-            transform.localScale, Vector3.zero, _disappearDuration, _disappearCurve,
-            hideOnComplete: true));
+        if (_fadeRoutine != null) StopCoroutine(_fadeRoutine);
+        _fadeRoutine = StartCoroutine(FadeRoutine(0f)); // Растворяем
     }
 
-    private IEnumerator ScaleRoutine(Vector3 from, Vector3 to, float duration,
-                                    AnimationCurve curve, bool hideOnComplete = false) {
+    private IEnumerator FadeRoutine(float targetAlpha) {
+        if (_colorPropertyId == -1) {
+            // Если цвет не найден, просто выключаем объект
+            gameObject.SetActive(targetAlpha > 0.5f);
+            yield break;
+        }
+
+        float startAlpha = GetAlpha();
         float elapsed = 0f;
 
-        while (elapsed < duration) {
+        while (elapsed < _fadeDuration) {
             elapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsed / duration);
-            float curved = curve.Evaluate(t);
-            transform.localScale = Vector3.LerpUnclamped(from, to, curved);
+            float currentAlpha = Mathf.Lerp(startAlpha, targetAlpha, elapsed / _fadeDuration);
+            SetAlpha(currentAlpha);
             yield return null;
         }
 
-        transform.localScale = to;
+        SetAlpha(targetAlpha);
+        _fadeRoutine = null;
+    }
 
-        if (hideOnComplete)
-            gameObject.SetActive(false);
+    private float GetAlpha() {
+        if (_renderers.Length > 0 && _colorPropertyId != -1) {
+            _renderers[0].GetPropertyBlock(_mpb);
+            return _mpb.GetColor(_colorPropertyId).a;
+        }
+        return 0f;
+    }
 
-        _scaleRoutine = null;
+    private void SetAlpha(float alpha) {
+        if (_colorPropertyId == -1) return;
+
+        foreach (var r in _renderers) {
+            if (r == null) continue;
+
+            r.GetPropertyBlock(_mpb);
+            Color c = r.sharedMaterial.GetColor(_colorPropertyId);
+            c.a = alpha;
+            _mpb.SetColor(_colorPropertyId, c);
+            r.SetPropertyBlock(_mpb);
+        }
+    }
+
+    /// <summary>
+    /// Принудительно показывает меч на пару секунд при получении, 
+    /// а потом запускает таймер на исчезновение.
+    /// </summary>
+    public void ShowOnPickup() {
+        // Проявляем меч
+        Appear();
+
+        // Запускаем таймер бездействия, чтобы он скрылся через несколько секунд
+        AttackFinished();
     }
 }

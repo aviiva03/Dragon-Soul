@@ -164,6 +164,7 @@ public class SwordShardsAction : InteractAction {
         if (player != null) {
             player.enabled = true;
             if (player.Sword != null) player.Sword.enabled = true;
+            player.Sword.ShowOnPickup();
         }
 
         if (PlayerProgress.Instance != null) PlayerProgress.Instance.GiveSword();

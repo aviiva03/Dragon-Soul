@@ -83,7 +83,8 @@ public class PlayerHeavyAttackState : PlayerState {
 
     public override void Exit() {
         Controller.SetAttacking(false);
-        Controller.StartCoroutine(DisappearDelayed(0.15f));
+        // Запускаем таймер исчезновения меча
+        if (Controller.Sword != null) Controller.Sword.AttackFinished();
     }
 
     private System.Collections.IEnumerator DisappearDelayed(float delay) {
