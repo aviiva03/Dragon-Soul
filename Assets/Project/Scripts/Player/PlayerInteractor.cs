@@ -10,7 +10,7 @@ public class PlayerInteractor : MonoBehaviour {
     private void Update() {
         FindInteractable();
 
-        if (_currentInteractable != null && Input.GetKeyDown(KeyCode.E)) {
+        if (_currentInteractable != null && Input.GetKeyDown(KeyCode.F)) {
             _currentInteractable.Interact();
 
             // Защита от null

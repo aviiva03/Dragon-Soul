@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using Cinemachine;
 
@@ -21,19 +22,17 @@ public class DialogueManager : MonoBehaviour {
         else Instance = this;
     }
 
-    // --- 1. ОБЫЧНЫЙ ДИАЛОГ (С телепортом и плавной камерой) ---
-    public void StartDialogue(DialogueData dialogue, CinemachineVirtualCamera dialogueCamera, GameObject objectToDestroy = null, Transform playerTeleportPoint = null) {
+    public void StartDialogue(DialogueData dialogue, CinemachineVirtualCamera dialogueCamera, GameObject objectToDestroy = null, Transform playerTeleportPoint = null, TalkingAnimator[] charactersToAnimate = null) {
         if (IsDialogueActive) return;
-        StartCoroutine(DialogueRoutine(dialogue, dialogueCamera, objectToDestroy, playerTeleportPoint, true));
+        StartCoroutine(DialogueRoutine(dialogue, dialogueCamera, objectToDestroy, playerTeleportPoint, true, charactersToAnimate));
     }
 
-    // --- 2. ДИАЛОГ ДЛЯ КАТ-СЦЕНЫ (Без телепорта, без управления камерой, без HUD) ---
-    public void StartCinematicDialogue(DialogueData dialogue) {
+    public void StartCinematicDialogue(DialogueData dialogue, TalkingAnimator[] charactersToAnimate = null) {
         if (IsDialogueActive) return;
-        StartCoroutine(DialogueRoutine(dialogue, null, null, null, false));
+        StartCoroutine(DialogueRoutine(dialogue, null, null, null, false, charactersToAnimate));
     }
 
-    private IEnumerator DialogueRoutine(DialogueData dialogue, CinemachineVirtualCamera dialogueCamera, GameObject objectToDestroy, Transform playerTeleportPoint, bool isStandardDialogue) {
+    private IEnumerator DialogueRoutine(DialogueData dialogue, CinemachineVirtualCamera dialogueCamera, GameObject objectToDestroy, Transform playerTeleportPoint, bool isStandardDialogue, TalkingAnimator[] charactersToAnimate) {
         IsDialogueActive = true;
 
         if (_playerController != null) {
@@ -41,7 +40,6 @@ public class DialogueManager : MonoBehaviour {
             _playerController.enabled = false;
         }
 
-        // --- ТЕЛЕПОРТ (только для обычных диалогов) ---
         Vector3 originalPosition = Vector3.zero;
         Quaternion originalRotation = Quaternion.identity;
         CharacterController cc = null;
@@ -59,16 +57,13 @@ public class DialogueManager : MonoBehaviour {
             if (cc != null) cc.enabled = true;
         }
 
-        // --- ЗАТЕМНЕНИЕ HUD (только для обычных) ---
         if (isStandardDialogue) {
             yield return FadeHUD(1f, 0f, _hudFadeDuration);
         }
 
-        // Разблокируем курсор для ЛЮБОГО диалога (чтобы можно было нажимать кнопки)
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        // --- КАМЕРА ---
         if (dialogueCamera != null) {
             CinemachineVirtualCamera[] allCameras = FindObjectsOfType<CinemachineVirtualCamera>();
             foreach (var cam in allCameras) cam.enabled = false;
@@ -78,23 +73,38 @@ public class DialogueManager : MonoBehaviour {
             dialogueCamera.enabled = true;
             dialogueCamera.Priority = 50;
 
-            // Для обычного диалога — плавно (1.5 сек). Для кат-сцены — мгновенно (0).
             Camera.main.GetComponent<CinemachineBrain>().m_DefaultBlend.m_Time = isStandardDialogue ? 1.5f : 0f;
 
             if (isStandardDialogue) yield return new WaitForSeconds(1.5f);
             else yield return null;
         }
 
-        // --- УЗЛЫ ДИАЛОГА ---
         string currentNodeId = dialogue.startNodeId;
 
         while (!string.IsNullOrEmpty(currentNodeId) && currentNodeId != "END") {
             DialogueNode node = dialogue.GetNode(currentNodeId);
-            if (node == null) {
-                Debug.LogError($"Узел {currentNodeId} не найден!");
-                break;
+            if (node == null) break;
+
+            // --- ЛОГИКА ЖЕСТИКУЛЯЦИИ ---
+            // Останавливаем жесты у всех (чтобы они не спамили)
+            if (charactersToAnimate != null) {
+                foreach (var character in charactersToAnimate) {
+                    if (character != null) character.StopTalking();
+                }
             }
 
+            // Включаем жест только тому, кто сейчас говорит (с шансом 50/50)
+            if (charactersToAnimate != null) {
+                foreach (var character in charactersToAnimate) {
+                    if (character != null && character.CharacterName == node.speakerName) {
+                        character.StartTalking();
+                        break;
+                    }
+                }
+            }
+            // --------------------------
+
+            // Показываем текст
             yield return _dialogueUI.ShowNodeRoutine(node);
 
             if (node.choices != null && node.choices.Count > 0) {
@@ -105,7 +115,13 @@ public class DialogueManager : MonoBehaviour {
             }
         }
 
-        // --- ВОЗВРАТ КАМЕРЫ ---
+        // Конец диалога - выключаем всех
+        if (charactersToAnimate != null) {
+            foreach (var character in charactersToAnimate) {
+                if (character != null) character.StopTalking();
+            }
+        }
+
         if (dialogueCamera != null) {
             dialogueCamera.enabled = false;
 
@@ -119,7 +135,6 @@ public class DialogueManager : MonoBehaviour {
             else yield return null;
         }
 
-        // --- ТЕЛЕПОРТ ОБРАТНО (только для обычных) ---
         if (isStandardDialogue && playerTeleportPoint != null && _playerController != null) {
             if (cc != null) cc.enabled = false;
             _playerController.transform.position = originalPosition;
@@ -129,7 +144,6 @@ public class DialogueManager : MonoBehaviour {
 
         if (_playerController != null) _playerController.enabled = true;
 
-        // --- ВОЗВРАТ HUD ---
         if (isStandardDialogue) {
             yield return FadeHUD(0f, 1f, _hudFadeDuration);
         }

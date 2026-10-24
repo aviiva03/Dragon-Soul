@@ -10,6 +10,10 @@ public class SwordShardsAction : InteractAction {
     [SerializeField] private GameObject _pastSceneRoot;
     [SerializeField] private CinemachineVirtualCamera _pastCamera;
 
+    [Header("Characters")]
+    [SerializeField] private TalkingAnimator _fatherAnim; // Ссылка на аниматор Отца
+    [SerializeField] private TalkingAnimator _dashenYoungAnim; // Ссылка на аниматор Дэшэна
+
     [Header("UI")]
     [SerializeField] private CanvasGroup _fadeGroup;
     [SerializeField] private CanvasGroup _filterGroup;
@@ -18,10 +22,7 @@ public class SwordShardsAction : InteractAction {
     [SerializeField] private DialogueData _memoryDialogue;
 
     [Header("Settings")]
-    [Tooltip("Время плавного затемнения экрана")]
     [SerializeField] private float _fadeTime = 1f;
-
-    [Tooltip("Сколько секунд висит текст на экране (Прошлое / Возвращение)")]
     [SerializeField] private float _titleHoldTime = 2f;
 
     private bool _isPlaying = false;
@@ -49,23 +50,18 @@ public class SwordShardsAction : InteractAction {
     }
 
     private IEnumerator CinematicSequence(PlayerController player) {
-        // ==========================================
         // ЭТАП 1: ВХОД В ПРОШЛОЕ
-        // ==========================================
         SetPlayerVisible(player, false);
         if (_hudGroup != null) _hudGroup.alpha = 0f;
 
-        // 1. Плавно затемняем
         yield return FadeUI(_fadeGroup, 0f, 1f, _fadeTime);
 
-        // 2. Пока экран черный — включаем сцену и фильтр
         if (_pastSceneRoot != null) _pastSceneRoot.SetActive(true);
         if (_filterGroup != null) {
             _filterGroup.gameObject.SetActive(true);
             _filterGroup.alpha = 1f;
         }
 
-        // 3. МАГИЯ КАМЕРЫ
         if (_playerCam != null) _playerCam.enabled = false;
 
         CinemachineVirtualCamera[] allCams = FindObjectsOfType<CinemachineVirtualCamera>();
@@ -88,35 +84,33 @@ public class SwordShardsAction : InteractAction {
             yield return null;
         }
 
-        // 4. Показываем текст
         _titleText.text = "Прошлое...";
         _titleText.gameObject.SetActive(true);
 
-        // 5. Ждем
         yield return new WaitForSeconds(_titleHoldTime);
 
         _titleText.gameObject.SetActive(false);
         yield return FadeUI(_fadeGroup, 1f, 0f, _fadeTime);
 
-        // ==========================================
         // ЭТАП 2: ДИАЛОГ
-        // ==========================================
-        DialogueManager.Instance.StartCinematicDialogue(_memoryDialogue);
+        // Собираем персонажей в массив и передаем в менеджер
+        TalkingAnimator[] talkers = new TalkingAnimator[] { _fatherAnim, _dashenYoungAnim };
+
+        DialogueManager.Instance.StartCinematicDialogue(_memoryDialogue, talkers);
 
         while (DialogueManager.Instance.IsDialogueActive) {
             yield return null;
         }
 
-        // ==========================================
         // ЭТАП 3: МИНИ-ИГРА
-        // ==========================================
         Debug.Log("[Shards] Запуск мини-игры...");
+
+        // ОТКЛЮЧАЕМ СЦЕНУ ПРОШЛОГО (скрываем Отца и Дэшэна)
+        if (_pastSceneRoot != null) _pastSceneRoot.SetActive(false);
 
         bool puzzleFinished = false;
 
-        // Включаем панель пазла
         if (SwordPuzzleManager.Instance != null) {
-            // Подписываемся на событие окончания пазла
             SwordPuzzleManager.Instance.OnPuzzleCompleted += () => {
                 puzzleFinished = true;
             };
@@ -124,19 +118,16 @@ public class SwordShardsAction : InteractAction {
             SwordPuzzleManager.Instance.StartPuzzle();
         } else {
             Debug.LogError("SwordPuzzleManager не найден на сцене!");
-            puzzleFinished = true; // Пропускаем, если сломалось
+            puzzleFinished = true;
         }
 
-        // Ждем, пока игрок не соберет меч
         while (!puzzleFinished) {
             yield return null;
         }
 
         Debug.Log("[Shards] Мини-игра успешно завершена!");
 
-        // ==========================================
         // ЭТАП 4: ВОЗВРАЩЕНИЕ
-        // ==========================================
         yield return FadeUI(_fadeGroup, 0f, 1f, _fadeTime);
 
         if (_pastSceneRoot != null) _pastSceneRoot.SetActive(false);

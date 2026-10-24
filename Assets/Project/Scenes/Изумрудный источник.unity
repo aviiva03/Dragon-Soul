@@ -463,9 +463,19 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2102830686786106425, guid: 83560c8156e2b6244b9e86802e560506,
         type: 3}
+      propertyPath: m_Avatar
+      value: 
+      objectReference: {fileID: 9000000, guid: 2dc7b382d25903545b405802eb2198ab, type: 3}
+    - target: {fileID: 2102830686786106425, guid: 83560c8156e2b6244b9e86802e560506,
+        type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 2102830686786106425, guid: 83560c8156e2b6244b9e86802e560506,
+        type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 355070c14e8a61d4db01cef0a53f28e5, type: 2}
     - target: {fileID: 5892572322528549248, guid: 83560c8156e2b6244b9e86802e560506,
         type: 3}
       propertyPath: m_LocalScale.x
@@ -554,6 +564,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 2048928099}
+    - targetCorrespondingSourceObject: {fileID: 8636068931560608998, guid: 83560c8156e2b6244b9e86802e560506,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2048928103}
   m_SourcePrefab: {fileID: 100100000, guid: 83560c8156e2b6244b9e86802e560506, type: 3}
 --- !u!1 &119754880
 GameObject:
@@ -9682,6 +9696,21 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 114152386}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &2048928103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2048928098}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5660461a2f1aa75448beab2f95b3bd68, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _characterName: "\u0414\u044D\u0448\u044D\u043D (\u043C\u0430\u043B\u0435\u043D\u044C\u043A\u0430\u044F)"
+  _talkTriggerName: TalkGesture
+  _gestureChance: 40
 --- !u!4 &2064374328 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5060207085441334796, guid: 0adf3929e5d6e0643a552c758f107c43,
@@ -28412,6 +28441,11 @@ PrefabInstance:
       propertyPath: _pastSceneRoot
       value: 
       objectReference: {fileID: 1766953933}
+    - target: {fileID: 2494925057449598632, guid: d3bb388e816272c4ab0da206a565ade3,
+        type: 3}
+      propertyPath: _dashenYoungAnim
+      value: 
+      objectReference: {fileID: 2048928103}
     - target: {fileID: 2494925057449598632, guid: d3bb388e816272c4ab0da206a565ade3,
         type: 3}
       propertyPath: _dashenYoungObject
