@@ -110,8 +110,29 @@ public class SwordShardsAction : InteractAction {
         // ==========================================
         // ЭТАП 3: МИНИ-ИГРА
         // ==========================================
-        Debug.Log("[Shards] Мини-игра началась!");
-        yield return new WaitForSeconds(1.5f);
+        Debug.Log("[Shards] Запуск мини-игры...");
+
+        bool puzzleFinished = false;
+
+        // Включаем панель пазла
+        if (SwordPuzzleManager.Instance != null) {
+            // Подписываемся на событие окончания пазла
+            SwordPuzzleManager.Instance.OnPuzzleCompleted += () => {
+                puzzleFinished = true;
+            };
+
+            SwordPuzzleManager.Instance.StartPuzzle();
+        } else {
+            Debug.LogError("SwordPuzzleManager не найден на сцене!");
+            puzzleFinished = true; // Пропускаем, если сломалось
+        }
+
+        // Ждем, пока игрок не соберет меч
+        while (!puzzleFinished) {
+            yield return null;
+        }
+
+        Debug.Log("[Shards] Мини-игра успешно завершена!");
 
         // ==========================================
         // ЭТАП 4: ВОЗВРАЩЕНИЕ
