@@ -23,7 +23,6 @@ public class CombatState : State {
     public CombatState(BossController boss) {
         _boss = boss;
         _executor = new AttackExecutor(boss);
-
         _executor.OnHitMoment += HandleHitMoment;
         _executor.OnFinished += HandleAttackFinished;
     }
@@ -31,7 +30,6 @@ public class CombatState : State {
     public override void Enter() {
         _boss.Animator.SetBool("isIdle", false);
         _boss.Animator.SetBool("isCombat", true);
-
         _boss.Agent.updateRotation = false;
         _boss.Agent.speed = _boss.GetCurrentSpeed();
 
@@ -42,6 +40,7 @@ public class CombatState : State {
     }
 
     public override void Update() {
+        // Если потеряли игрока — уходим в Dormant
         if (_boss.DistanceToPlayer() > _boss.LoseSightRange || !_boss.CanSeePlayer()) {
             _boss.AttackSelector.ResetLastSelected();
             _boss.ToDormant();
@@ -52,7 +51,7 @@ public class CombatState : State {
             case Phase.Managing: TickManaging(); break;
             case Phase.Approaching: TickApproaching(); break;
             case Phase.Strafing: TickStrafing(); break;
-            case Phase.Attacking: TickAttacking(); break;
+            case Phase.Attacking: _executor.Tick(); break;
             case Phase.Repositioning: TickRepositioning(); break;
         }
     }
@@ -70,7 +69,6 @@ public class CombatState : State {
 
     private void TickManaging() {
         _boss.RotateTowardsPlayer(12f);
-
         float distance = _boss.DistanceToPlayer();
 
         if (_boss.CanAttack()) {
@@ -97,7 +95,6 @@ public class CombatState : State {
 
     private void TickApproaching() {
         _boss.RotateTowardsPlayer(12f);
-
         float distance = _boss.DistanceToPlayer();
         float target = _boss.PreferredDistance;
 
@@ -133,7 +130,6 @@ public class CombatState : State {
 
     private void TickStrafing() {
         _boss.RotateTowardsPlayer(12f);
-
         float distance = _boss.DistanceToPlayer();
 
         if (_boss.CanAttack()) {
@@ -154,10 +150,6 @@ public class CombatState : State {
         _boss.MoveTo(_strafeTarget);
     }
 
-    private void TickAttacking() {
-        _executor.Tick();
-    }
-
     private void PickNewStrafeTarget() {
         float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
         Vector3 offset = new Vector3(Mathf.Sin(angle), 0f, Mathf.Cos(angle));
@@ -169,14 +161,12 @@ public class CombatState : State {
         _currentCombo = combo;
         _stepIndex = 0;
         _phase = Phase.Attacking;
-
         _boss.StopMoving();
         _executor.Start(CurrentStep);
     }
 
     private void HandleHitMoment() {
         if (!IsPlayerInAttackZone(CurrentStep)) return;
-
         if (_boss.Player.TryGetComponent(out IDamageable target))
             target.TakeDamage(CurrentStep.damage, _boss.Player.position);
     }
@@ -184,18 +174,14 @@ public class CombatState : State {
     private bool IsPlayerInAttackZone(AttackData data) {
         Vector3 toPlayer = _boss.Player.position - _boss.transform.position;
         toPlayer.y = 0f;
-
         if (toPlayer.magnitude > data.range) return false;
         if (data.hitAngle >= 360f) return true;
-
-        Vector3 forward = _boss.transform.forward;
-        float angle = Vector3.Angle(forward, toPlayer);
+        float angle = Vector3.Angle(_boss.transform.forward, toPlayer);
         return angle <= data.hitAngle * 0.5f;
     }
 
     private void HandleAttackFinished() {
         _stepIndex++;
-
         if (_stepIndex >= _currentCombo.steps.Length) {
             EnterRepositioning();
         } else {
@@ -205,7 +191,6 @@ public class CombatState : State {
 
     private void EnterRepositioning() {
         _boss.NotifyAttackFinished();
-
         _phase = Phase.Repositioning;
         _repositionTimer = 0f;
         _boss.Agent.speed = _boss.GetCurrentSpeed();
@@ -213,15 +198,12 @@ public class CombatState : State {
         Vector3 away = (_boss.transform.position - _boss.Player.position).normalized;
         away.y = 0f;
         Vector3 target = _boss.transform.position + away * 3f;
-
         _boss.MoveTo(target);
     }
 
     private void TickRepositioning() {
         _boss.RotateTowardsPlayer(6f);
-
         _repositionTimer += Time.deltaTime;
-
         if (_repositionTimer >= RepositionDuration) {
             EnterManaging();
         }

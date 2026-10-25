@@ -1,4 +1,3 @@
-using Cinemachine;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,16 +5,12 @@ public class WorldHealthBarUI : MonoBehaviour {
 
     [SerializeField] private Health _health;
     [SerializeField] private Image _fillImage;
-    [SerializeField] private Transform _cameraTransform;
 
     private void Start() {
         if (_health == null) {
             Debug.LogError($"[{name}] _health не назначен!");
             return;
         }
-
-        if (_cameraTransform == null && Camera.main != null)
-            _cameraTransform = Camera.main.transform;
 
         _health.OnHealthChanged += UpdateBar;
         _health.OnDied += HandleDeath;
@@ -33,17 +28,9 @@ public class WorldHealthBarUI : MonoBehaviour {
     }
 
     private void LateUpdate() {
-        Transform targetCamera = null;
-
-        var brain = Camera.main.GetComponent<CinemachineBrain>();
-        if (brain != null && brain.ActiveVirtualCamera != null) {
-            targetCamera = brain.ActiveVirtualCamera.VirtualCameraGameObject.transform;
-        } else if (Camera.main != null) {
-            targetCamera = Camera.main.transform;
-        }
-
-        if (targetCamera != null) {
-            transform.rotation = targetCamera.rotation;
+        // ѕоворачиваем плашку лицом к камере (Billboard)
+        if (Camera.main != null) {
+            transform.rotation = Quaternion.LookRotation(transform.position - Camera.main.transform.position);
         }
     }
 
@@ -53,7 +40,7 @@ public class WorldHealthBarUI : MonoBehaviour {
     }
 
     private void HandleDeath() {
-        // —крыть плашку при смерти
+        // —крываем плашку при смерти, чтобы не висела над трупом
         gameObject.SetActive(false);
     }
 }

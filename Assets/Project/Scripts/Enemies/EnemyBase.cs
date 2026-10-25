@@ -34,6 +34,11 @@ public abstract class EnemyBase : MonoBehaviour {
     }
 
     public void ChangeState(State newState) {
+        if (newState == null) {
+            Debug.LogError($"[{name}] Попытка переключиться в пустое состояние (null)! Проверь BossController.");
+            return;
+        }
+
         CurrentState?.Exit();
         CurrentState = newState;
         CurrentState.Enter();

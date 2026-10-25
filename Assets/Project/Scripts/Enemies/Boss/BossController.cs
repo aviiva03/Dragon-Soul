@@ -48,6 +48,14 @@ public class BossController : EnemyBase {
 
     private void HandleDeath() => ToDead();
 
+    // ÏĞÈÍÓÄÈÒÅËÜÍÛÉ ÇÀÏÓÑÊ ÁÎß (äëÿ ñşæåòà)
+    public void ForceCombat() {
+        if (Health != null && Health.IsAlive) {
+            if (_combatState == null) _combatState = new CombatState(this);
+            ChangeState(_combatState);
+        }
+    }
+
     public bool CanAttack() {
         float mult = 1f;
         if (_phaseController != null && _phaseController.CurrentPhase != null)
