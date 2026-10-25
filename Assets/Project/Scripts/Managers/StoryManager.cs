@@ -7,17 +7,14 @@ public class StoryManager : MonoBehaviour {
 
     [Header("Stage 1: Small Enemies")]
     [SerializeField] private GameObject[] _smallEnemies;
-    [SerializeField] private GameObject[] _wallCubes;
+
+    [Header("Wall Destruction")]
+    [SerializeField] private GameObject _wallParent; // Объект-родитель стены
+    [SerializeField] private string _wallID = "Wall_01"; // ID для сохранения
 
     [Header("Stage 2: Bosses")]
     [SerializeField] private GameObject[] _bosses;
-
-    [Header("Stage 3: Path")]
-    [SerializeField] private GameObject _bridgeBarrier;
-
-    [Header("Stealth Guards To Remove")]
-    [Tooltip("Стелс-охранники, которых нужно удалить, когда начнется битва")]
-    [SerializeField] private GameObject[] _stealthGuardsToRemove;
+    [SerializeField] private string[] _bossIDs;
 
     private int _enemiesAlive = 0;
     private int _bossesAlive = 0;
@@ -27,26 +24,31 @@ public class StoryManager : MonoBehaviour {
         else Instance = this;
     }
 
+    private void Start() {
+        if (PlayerProgress.Instance == null) return;
+
+        // Проверяем, сломана ли стена при загрузке (чтобы она не появлялась)
+        if (PlayerProgress.Instance.IsObjectDestroyed(_wallID)) {
+            if (_wallParent != null) _wallParent.SetActive(false);
+            Debug.Log("[Story] Стена уже разрушена ранее.");
+        }
+    }
+
     public void StartStage1() {
+        // Если стена уже сломана, значит, этот этап пройден, врагов не спавним
+        if (PlayerProgress.Instance != null && PlayerProgress.Instance.IsObjectDestroyed(_wallID)) {
+            return;
+        }
+
         Debug.Log("[Story] Этап 1: Спавн мелких врагов");
         ClearStealthArea();
+
         foreach (var enemy in _smallEnemies) {
             if (enemy != null) {
                 enemy.SetActive(true);
                 _enemiesAlive++;
                 var health = enemy.GetComponent<Health>();
                 if (health != null) health.OnDied += OnSmallEnemyDied;
-            }
-        }
-    }
-
-    private void ClearStealthArea() {
-        Debug.Log("[Story] Удаляем старых стелс-охранников со сцены.");
-        if (_stealthGuardsToRemove != null) {
-            foreach (var guard in _stealthGuardsToRemove) {
-                if (guard != null) {
-                    Destroy(guard);
-                }
             }
         }
     }
@@ -60,44 +62,62 @@ public class StoryManager : MonoBehaviour {
     }
 
     private IEnumerator BreakWallRoutine() {
-        foreach (var cube in _wallCubes) {
-            if (cube != null) cube.SetActive(false);
+        // Ломаем стену и сохраняем это
+        if (_wallParent != null) {
+            var wallState = _wallParent.GetComponent<WorldStateObject>();
+            if (wallState != null) {
+                wallState.DestroyAndSave();
+            } else {
+                _wallParent.SetActive(false);
+                if (PlayerProgress.Instance != null) PlayerProgress.Instance.RegisterDestroyedObject(_wallID);
+            }
         }
 
         yield return new WaitForSeconds(1f);
 
         Debug.Log("[Story] Этап 2: Спавн боссов");
-        foreach (var boss in _bosses) {
+        for (int i = 0; i < _bosses.Length; i++) {
+            GameObject boss = _bosses[i];
+            string bossID = (i < _bossIDs.Length) ? _bossIDs[i] : boss.name;
+
             if (boss != null) {
+                // Не спавним босса, если он уже убит
+                if (PlayerProgress.Instance != null && PlayerProgress.Instance.IsBossDefeated(bossID)) {
+                    continue;
+                }
+
                 boss.SetActive(true);
                 _bossesAlive++;
 
                 var health = boss.GetComponent<Health>();
                 if (health != null) {
-                    health.OnDied += OnBossDied;
+                    health.OnDied += () => OnBossDied(bossID);
+
                     if (BossHealthBarManager.Instance != null) {
                         BossHealthBarManager.Instance.RegisterBoss(health, boss.name);
                     }
                 }
 
                 var bossController = boss.GetComponent<BossController>();
-                if (bossController != null) {
-                    // ПРОСТО ПЕРЕКЛЮЧАЕМ В БОЙ
-                    bossController.ForceCombat();
-                }
+                if (bossController != null) bossController.ForceCombat();
             }
         }
     }
 
-    private void OnBossDied() {
+    private void OnBossDied(string bossID) {
         _bossesAlive--;
+
+        // Записываем, что босс убит
+        if (PlayerProgress.Instance != null) {
+            PlayerProgress.Instance.RegisterBossDefeated(bossID);
+        }
+
         if (_bossesAlive <= 0) {
-            Debug.Log("[Story] Боссы побеждены! Путь открыт.");
-            OpenPath();
+            Debug.Log("[Story] Боссы побеждены!");
         }
     }
 
-    private void OpenPath() {
-        if (_bridgeBarrier != null) _bridgeBarrier.SetActive(false);
+    private void ClearStealthArea() {
+        // Тут твой код удаления стелс-охранников (если он нужен)
     }
 }
