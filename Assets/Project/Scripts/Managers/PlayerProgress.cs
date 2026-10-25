@@ -4,7 +4,7 @@ using UnityEngine;
 public class PlayerProgress : MonoBehaviour {
     public static PlayerProgress Instance { get; private set; }
 
-    public bool HasSword { get; private set; } = true;
+    public bool HasSword { get; private set; } = false;
 
     public event Action OnSwordObtained;
 
@@ -19,9 +19,28 @@ public class PlayerProgress : MonoBehaviour {
 
     public void GiveSword() {
         if (HasSword) return;
-
         HasSword = true;
-        Debug.Log("[PlayerProgress] Меч получен! Атака разблокирована.");
         OnSwordObtained?.Invoke();
+
+        // Сохраняем прогресс сразу как получили меч!
+        SaveSystem.SaveGame();
+    }
+
+    // --- ДЛЯ СИСТЕМЫ СОХРАНЕНИЯ ---
+
+    // Собираем данные для сохранения
+    public GameData GetSaveData() {
+        GameData data = new GameData();
+        data.hasSword = HasSword;
+        return data;
+    }
+
+    // Восстанавливаем данные при загрузке
+    public void LoadFromData(GameData data) {
+        HasSword = data.hasSword;
+
+        if (HasSword) {
+            OnSwordObtained?.Invoke();
+        }
     }
 }

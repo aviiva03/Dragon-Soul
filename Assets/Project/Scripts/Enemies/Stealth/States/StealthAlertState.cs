@@ -7,7 +7,7 @@ public class StealthAlertState : State {
     private float _visibleTimer;
     private float _lostTimer;
     private bool _detected;
-    private bool _exclamationShow;
+    private bool _exclamationShown;
 
     private const float SuspicionThreshold = 0.5f;
 
@@ -26,7 +26,7 @@ public class StealthAlertState : State {
         _visibleTimer = 0f;
         _lostTimer = 0f;
         _detected = false;
-        _exclamationShow = false;
+        _exclamationShown = false;
 
         _guard.AlertIndicator.ShowQuestion();
     }
@@ -40,8 +40,8 @@ public class StealthAlertState : State {
             _visibleTimer += Time.deltaTime;
             _lostTimer = 0f;
 
-            if (!_exclamationShow && _visibleTimer >= SuspicionThreshold) {
-                _exclamationShow = true;
+            if (!_exclamationShown && _visibleTimer >= SuspicionThreshold) {
+                _exclamationShown = true;
                 _guard.AlertIndicator.ShowExclamation();
             }
 
@@ -53,8 +53,8 @@ public class StealthAlertState : State {
             _lostTimer += Time.deltaTime;
             _visibleTimer = 0f;
 
-            if (_exclamationShow) {
-                _exclamationShow = false;
+            if (_exclamationShown) {
+                _exclamationShown = false;
                 _guard.AlertIndicator.ShowQuestion();
             }
 
@@ -73,7 +73,9 @@ public class StealthAlertState : State {
     }
 
     private void TriggerRespawn() {
-        if (GameManager.Instance != null)
-            GameManager.Instance.RespawnPlayer();
+        if (GameManager.Instance != null) {
+            // Вызываем специализированный респавн для стелса
+            GameManager.Instance.RespawnFromStealth();
+        }
     }
 }

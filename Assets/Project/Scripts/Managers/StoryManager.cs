@@ -15,6 +15,10 @@ public class StoryManager : MonoBehaviour {
     [Header("Stage 3: Path")]
     [SerializeField] private GameObject _bridgeBarrier;
 
+    [Header("Stealth Guards To Remove")]
+    [Tooltip("Стелс-охранники, которых нужно удалить, когда начнется битва")]
+    [SerializeField] private GameObject[] _stealthGuardsToRemove;
+
     private int _enemiesAlive = 0;
     private int _bossesAlive = 0;
 
@@ -25,12 +29,24 @@ public class StoryManager : MonoBehaviour {
 
     public void StartStage1() {
         Debug.Log("[Story] Этап 1: Спавн мелких врагов");
+        ClearStealthArea();
         foreach (var enemy in _smallEnemies) {
             if (enemy != null) {
                 enemy.SetActive(true);
                 _enemiesAlive++;
                 var health = enemy.GetComponent<Health>();
                 if (health != null) health.OnDied += OnSmallEnemyDied;
+            }
+        }
+    }
+
+    private void ClearStealthArea() {
+        Debug.Log("[Story] Удаляем старых стелс-охранников со сцены.");
+        if (_stealthGuardsToRemove != null) {
+            foreach (var guard in _stealthGuardsToRemove) {
+                if (guard != null) {
+                    Destroy(guard);
+                }
             }
         }
     }
