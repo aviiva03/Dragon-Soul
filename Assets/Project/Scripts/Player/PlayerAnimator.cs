@@ -13,21 +13,49 @@ public class PlayerAnimator : MonoBehaviour {
 
     private Animator _anim;
 
-    private void Awake() => _anim = GetComponent<Animator>();
-
-    public void SetSpeed(float normalized) =>
-        _anim.SetFloat(SpeedHash, normalized, 0.1f, Time.deltaTime);
-
-    public void SetGrounded(bool g) => _anim.SetBool(GroundedHash, g);
-    public void SetVerticalVelocity(float v) => _anim.SetFloat(VertVelHash, v);
-
-    public void PlayJump() => _anim.SetTrigger(JumpHash);
-    public void PlayDodge() => _anim.SetTrigger(DodgeHash);
-
-    public void PlayLightAttack(int comboIndex) {
-        if (comboIndex == 0) _anim.SetTrigger(LightAttack1Hash);
-        else _anim.SetTrigger(LightAttack2Hash);
+    private Animator Anim {
+        get {
+            if (_anim == null) {
+                _anim = GetComponent<Animator>();
+                if (_anim == null) _anim = GetComponentInChildren<Animator>();
+            }
+            return _anim;
+        }
     }
 
-    public void PlayHeavyAttack() => _anim.SetTrigger(HeavyAttackHash);
+    public void SetSpeed(float normalized) {
+        if (Anim == null) return;
+        Anim.SetFloat(SpeedHash, normalized, 0.1f, Time.deltaTime);
+    }
+
+    public void SetGrounded(bool g) {
+        if (Anim == null) return;
+        Anim.SetBool(GroundedHash, g);
+    }
+
+    public void SetVerticalVelocity(float v) {
+        if (Anim == null) return;
+        Anim.SetFloat(VertVelHash, v);
+    }
+
+    public void PlayJump() {
+        if (Anim == null) return;
+        Anim.SetTrigger(JumpHash);
+    }
+
+    public void PlayDodge() {
+        if (Anim == null) return;
+        Anim.SetTrigger(DodgeHash);
+    }
+
+    public void PlayLightAttack(int comboIndex) {
+        if (Anim == null) return;
+        if (comboIndex == 0) Anim.SetTrigger(LightAttack1Hash);
+        else Anim.SetTrigger(LightAttack2Hash);
+    }
+
+    public void PlayHeavyAttack() {
+        if (Anim == null) return;
+        Anim.SetTrigger(HeavyAttackHash);
+    }
 }

@@ -103,6 +103,10 @@ public class PlayerController : MonoBehaviour {
         _stateMachine.Initialize(_factory.Idle);
     }
 
+    private void Start() {
+        if (_input != null) _input.Player.Enable();
+    }
+
     private void _inputSetup() {
         _input = new PlayerControls();
 

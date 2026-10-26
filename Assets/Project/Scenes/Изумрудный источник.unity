@@ -168,7 +168,7 @@ PrefabInstance:
         type: 3}
       propertyPath: _player
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 1051869367}
     - target: {fileID: 5347906758559222831, guid: 054e465f3d874d447b0efb089a6952d7,
         type: 3}
       propertyPath: _detectionRange
@@ -3092,6 +3092,7 @@ GameObject:
   - component: {fileID: 471132666}
   - component: {fileID: 471132669}
   - component: {fileID: 471132667}
+  - component: {fileID: 471132670}
   m_Layer: 0
   m_Name: Managers
   m_TagString: Untagged
@@ -3142,6 +3143,18 @@ MonoBehaviour:
   _player: {fileID: 1051869367}
   _defaultRespawnPoint: {fileID: 1781884436}
   _textsData: {fileID: 11400000, guid: bd73eb824ea81f54b981d0547ed4c24d, type: 2}
+--- !u!114 &471132670
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 471132665}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95bb63afb918eda42b6a4354a0868a45, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &478216454
 GameObject:
   m_ObjectHideFlags: 0
@@ -4215,7 +4228,7 @@ PrefabInstance:
         type: 3}
       propertyPath: _player
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 1051869367}
     - target: {fileID: 7499181951291622889, guid: a2cc0ecf3d9c337438dd957c5fbd1a82,
         type: 3}
       propertyPath: _detectionRange
@@ -7646,7 +7659,7 @@ PrefabInstance:
         type: 3}
       propertyPath: _player
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 1051869367}
     - target: {fileID: 7499181951291622889, guid: a2cc0ecf3d9c337438dd957c5fbd1a82,
         type: 3}
       propertyPath: _detectionRange
@@ -8533,7 +8546,7 @@ PrefabInstance:
         type: 3}
       propertyPath: _player
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 1051869367}
     - target: {fileID: 7499181951291622889, guid: a2cc0ecf3d9c337438dd957c5fbd1a82,
         type: 3}
       propertyPath: _detectionRange
@@ -9900,7 +9913,7 @@ PrefabInstance:
         type: 3}
       propertyPath: _player
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 1051869367}
     - target: {fileID: 7499181951291622889, guid: a2cc0ecf3d9c337438dd957c5fbd1a82,
         type: 3}
       propertyPath: _detectionRange
@@ -10163,7 +10176,7 @@ PrefabInstance:
         type: 3}
       propertyPath: _player
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 1051869367}
     - target: {fileID: 5347906758559222831, guid: 054e465f3d874d447b0efb089a6952d7,
         type: 3}
       propertyPath: _detectionRange
