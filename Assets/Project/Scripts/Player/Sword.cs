@@ -23,14 +23,16 @@ public class Sword : MonoBehaviour {
         _renderers = GetComponentsInChildren<Renderer>();
         _mpb = new MaterialPropertyBlock();
 
+        // Ищем свойство цвета
         if (_renderers.Length > 0) {
             Material mat = _renderers[0].sharedMaterial;
             if (mat.HasProperty("_BaseColor")) _colorPropertyId = Shader.PropertyToID("_BaseColor");
             else if (mat.HasProperty("_Color")) _colorPropertyId = Shader.PropertyToID("_Color");
-            else Debug.LogError("[Sword] Не удалось найти свойство цвета в материале! (Нужен _BaseColor или _Color)");
+            else Debug.LogWarning("[Sword] Не найдено свойство цвета (Alpha)! Меч будет просто выключаться.");
         }
 
         SetAlpha(0f);
+        gameObject.SetActive(false); // Жестко выключаем при старте
     }
 
     public void Appear() {
@@ -38,6 +40,8 @@ public class Sword : MonoBehaviour {
 
         if (_audioSource != null && _appearSound != null)
             _audioSource.PlayOneShot(_appearSound);
+
+        gameObject.SetActive(true); // Включаем объект
 
         if (_fadeRoutine != null) StopCoroutine(_fadeRoutine);
         _fadeRoutine = StartCoroutine(FadeRoutine(1f));
@@ -68,6 +72,7 @@ public class Sword : MonoBehaviour {
 
     private IEnumerator FadeRoutine(float targetAlpha) {
         if (_colorPropertyId == -1) {
+            // Если прозрачность не работает, просто выключаем/включаем
             gameObject.SetActive(targetAlpha > 0.5f);
             yield break;
         }
@@ -83,6 +88,12 @@ public class Sword : MonoBehaviour {
         }
 
         SetAlpha(targetAlpha);
+
+        // Если полностью прозрачный — выключаем объект для оптимизации
+        if (targetAlpha <= 0f) {
+            gameObject.SetActive(false);
+        }
+
         _fadeRoutine = null;
     }
 

@@ -160,6 +160,10 @@ public class PlayerController : MonoBehaviour {
         _jumpPressedThisFrame = false;
         _dodgePressedThisFrame = false;
         _jumpReleased = false;
+
+        if (_lightAttackPressedThisFrame) {
+            Debug.Log($"[Attack Check] Флаг есть. Меч: {HasSword}. В атаке: {IsAttacking}. Хочет атаковать: {WantsLightAttack}");
+        }
     }
 
     private void UpdateGrounded() {

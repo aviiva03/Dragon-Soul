@@ -143,6 +143,22 @@ public class DialogueManager : MonoBehaviour {
 
         IsDialogueActive = false;
         if (objectToDestroy != null) Destroy(objectToDestroy);
+
+        if (_playerController != null) _playerController.enabled = true;
+
+        if (isStandardDialogue) {
+            yield return FadeHUD(0f, 1f, _hudFadeDuration);
+        }
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
+        if (!string.IsNullOrEmpty(dialogue.dialogueID) && PlayerProgress.Instance != null) {
+            PlayerProgress.Instance.RegisterDialogueCompleted(dialogue.dialogueID);
+        }
+
+        IsDialogueActive = false;
+        if (objectToDestroy != null) Destroy(objectToDestroy);
     }
 
     private IEnumerator FadeHUD(float from, float to, float duration) {

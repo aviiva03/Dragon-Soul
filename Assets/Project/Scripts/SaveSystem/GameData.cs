@@ -6,4 +6,5 @@ public class GameData {
     public string currentCheckpointID;
     public List<string> destroyedObjectIDs = new List<string>();
     public List<string> defeatedBossIDs = new List<string>();
+    public List<string> completedDialogueIDs = new List<string>();
 }

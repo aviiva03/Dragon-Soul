@@ -10,6 +10,7 @@ public class PlayerProgress : MonoBehaviour {
 
     private List<string> _destroyedObjects = new List<string>();
     private List<string> _defeatedBosses = new List<string>();
+    private List<string> _completedDialogues = new List<string>();
 
     private void Awake() {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -27,20 +28,22 @@ public class PlayerProgress : MonoBehaviour {
     // --- УНИЧТОЖЕННЫЕ ОБЪЕКТЫ ---
     public bool IsObjectDestroyed(string id) => _destroyedObjects.Contains(id);
     public void RegisterDestroyedObject(string id) {
-        if (!_destroyedObjects.Contains(id)) {
-            _destroyedObjects.Add(id);
-            SaveSystem.SaveGame();
-        }
+        if (!_destroyedObjects.Contains(id)) { _destroyedObjects.Add(id); SaveSystem.SaveGame(); }
     }
 
     // --- УБИТЫЕ БОССЫ ---
     public bool IsBossDefeated(string bossID) => _defeatedBosses.Contains(bossID);
-
     public void RegisterBossDefeated(string bossID) {
-        if (!_defeatedBosses.Contains(bossID)) {
-            _defeatedBosses.Add(bossID);
-            Debug.Log($"[Progress] Босс {bossID} побежден и сохранен.");
-            SaveSystem.SaveGame(); // Сохраняем прогресс
+        if (!_defeatedBosses.Contains(bossID)) { _defeatedBosses.Add(bossID); SaveSystem.SaveGame(); }
+    }
+
+    // --- ПРОСЛУШАННЫЕ ДИАЛОГИ ---
+    public bool IsDialogueCompleted(string dialogueID) => _completedDialogues.Contains(dialogueID);
+    public void RegisterDialogueCompleted(string dialogueID) {
+        if (!_completedDialogues.Contains(dialogueID)) {
+            _completedDialogues.Add(dialogueID);
+            Debug.Log($"[Progress] Диалог {dialogueID} записан в прогресс.");
+            SaveSystem.SaveGame();
         }
     }
 
@@ -49,14 +52,16 @@ public class PlayerProgress : MonoBehaviour {
         GameData data = new GameData();
         data.hasSword = HasSword;
         data.destroyedObjectIDs = _destroyedObjects;
-        data.defeatedBossIDs = _defeatedBosses; // Сохраняем боссов
+        data.defeatedBossIDs = _defeatedBosses;
+        data.completedDialogueIDs = _completedDialogues; // Сохраняем диалоги
         return data;
     }
 
     public void LoadFromData(GameData data) {
         HasSword = data.hasSword;
         _destroyedObjects = data.destroyedObjectIDs ?? new List<string>();
-        _defeatedBosses = data.defeatedBossIDs ?? new List<string>(); // Загружаем боссов
+        _defeatedBosses = data.defeatedBossIDs ?? new List<string>();
+        _completedDialogues = data.completedDialogueIDs ?? new List<string>(); // Загружаем диалоги
         if (HasSword) OnSwordObtained?.Invoke();
     }
 }

@@ -5,12 +5,16 @@ using UnityEngine;
 public class StoryManager : MonoBehaviour {
     public static StoryManager Instance { get; private set; }
 
+    [Header("Stealth Guards To Remove")]
+    [Tooltip("Перетащи сюда стелс-охранников, которых надо удалить во второй части")]
+    [SerializeField] private GameObject[] _stealthGuardsToRemove;
+
     [Header("Stage 1: Small Enemies")]
     [SerializeField] private GameObject[] _smallEnemies;
 
     [Header("Wall Destruction")]
-    [SerializeField] private GameObject _wallParent; // Объект-родитель стены
-    [SerializeField] private string _wallID = "Wall_01"; // ID для сохранения
+    [SerializeField] private GameObject _wallParent;
+    [SerializeField] private string _wallID = "Wall_01";
 
     [Header("Stage 2: Bosses")]
     [SerializeField] private GameObject[] _bosses;
@@ -27,7 +31,7 @@ public class StoryManager : MonoBehaviour {
     private void Start() {
         if (PlayerProgress.Instance == null) return;
 
-        // Проверяем, сломана ли стена при загрузке (чтобы она не появлялась)
+        // Проверяем, сломана ли стена при загрузке
         if (PlayerProgress.Instance.IsObjectDestroyed(_wallID)) {
             if (_wallParent != null) _wallParent.SetActive(false);
             Debug.Log("[Story] Стена уже разрушена ранее.");
@@ -35,12 +39,13 @@ public class StoryManager : MonoBehaviour {
     }
 
     public void StartStage1() {
-        // Если стена уже сломана, значит, этот этап пройден, врагов не спавним
         if (PlayerProgress.Instance != null && PlayerProgress.Instance.IsObjectDestroyed(_wallID)) {
             return;
         }
 
         Debug.Log("[Story] Этап 1: Спавн мелких врагов");
+
+        // ВОТ ТУТ МЫ УДАЛЯЕМ СТАРЫХ ОХРАННИКОВ
         ClearStealthArea();
 
         foreach (var enemy in _smallEnemies) {
@@ -62,7 +67,6 @@ public class StoryManager : MonoBehaviour {
     }
 
     private IEnumerator BreakWallRoutine() {
-        // Ломаем стену и сохраняем это
         if (_wallParent != null) {
             var wallState = _wallParent.GetComponent<WorldStateObject>();
             if (wallState != null) {
@@ -81,7 +85,6 @@ public class StoryManager : MonoBehaviour {
             string bossID = (i < _bossIDs.Length) ? _bossIDs[i] : boss.name;
 
             if (boss != null) {
-                // Не спавним босса, если он уже убит
                 if (PlayerProgress.Instance != null && PlayerProgress.Instance.IsBossDefeated(bossID)) {
                     continue;
                 }
@@ -107,7 +110,6 @@ public class StoryManager : MonoBehaviour {
     private void OnBossDied(string bossID) {
         _bossesAlive--;
 
-        // Записываем, что босс убит
         if (PlayerProgress.Instance != null) {
             PlayerProgress.Instance.RegisterBossDefeated(bossID);
         }
@@ -117,7 +119,21 @@ public class StoryManager : MonoBehaviour {
         }
     }
 
+    // ВОТ ЭТОТ МЕТОД МЫ ВОССТАНОВИЛИ
     private void ClearStealthArea() {
-        // Тут твой код удаления стелс-охранников (если он нужен)
+        Debug.Log("[Story] Удаляем стелс-охранников со сцены.");
+        if (_stealthGuardsToRemove != null) {
+            foreach (var guard in _stealthGuardsToRemove) {
+                if (guard != null) {
+                    // Если на охраннике висит WorldStateObject, удаляем через него (чтобы сохранилось)
+                    var stateObj = guard.GetComponent<WorldStateObject>();
+                    if (stateObj != null) {
+                        stateObj.DestroyAndSave();
+                    } else {
+                        Destroy(guard);
+                    }
+                }
+            }
+        }
     }
 }

@@ -15,12 +15,10 @@ public class BossDeadState : State {
         _boss.Agent.enabled = false;
 
         var colliders = _boss.GetComponentsInChildren<Collider>();
-        foreach (var col in colliders)
-            col.enabled = false;
+        foreach (var col in colliders) col.enabled = false;
 
         _boss.Animator.SetBool("isIdle", false);
-        _boss.Animator.SetBool("isWalking", false);
-        _boss.Animator.SetBool("isRunning", false);
+        _boss.Animator.SetBool("isCombat", false);
 
         _boss.Animator.SetTrigger("death");
 
@@ -29,7 +27,6 @@ public class BossDeadState : State {
 
     public override void Update() {
         _timer += Time.deltaTime;
-
         if (_timer >= DeathDelay) {
             Object.Destroy(_boss.gameObject);
         }
