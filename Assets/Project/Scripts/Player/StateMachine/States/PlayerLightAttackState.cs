@@ -14,21 +14,24 @@ public class PlayerLightAttackState : PlayerState {
             ? Stats.LightAttack1Duration
             : Stats.LightAttack2Duration;
         _attackTimeLeft = _attackDuration;
+
         _hasHit = false;
+        Controller.CanMove = false;
+        Controller.CanRotate = false;
+        Controller.MoveDirection = Vector3.zero;
+
+        // ПОЛНАЯ БЛОКИРОВКА ДВИЖЕНИЯ И ПОВОРОТА
+        Controller.CanMove = false;
+        Controller.CanRotate = false;
 
         Controller.SetAttacking(true);
 
-        Vector3 aimDirection = Controller.GetCameraRelativeMoveDirection();
-        if (aimDirection.sqrMagnitude < 0.01f)
-            aimDirection = Controller.CameraRef.PlanarForward;
-        Controller.transform.rotation = Quaternion.LookRotation(aimDirection);
+        // Жестко фиксируем текущий поворот (смотрим туда, куда смотрели до атаки)
+        Vector3 lookDir = Controller.transform.forward;
+        Controller.transform.rotation = Quaternion.LookRotation(lookDir);
 
-        Controller.StartStep(
-            aimDirection,
-            Stats.LightAttackStepDistance,
-            Stats.LightAttackStepDuration);
+        //Controller.StartStep(aimDirection, Stats.LightAttackStepDistance, Stats.LightAttackStepDuration);
 
-        // Показываем меч при начале атаки
         if (Controller.Sword != null) Controller.Sword.Appear();
 
         Animator.PlayLightAttack(Controller.LightAttackComboIndex);
@@ -72,8 +75,11 @@ public class PlayerLightAttackState : PlayerState {
 
     public override void Exit() {
         Controller.SetAttacking(false);
-        // Говорим мечу, что атака закончилась (запустится таймер на исчезновение)
         if (Controller.Sword != null) Controller.Sword.AttackFinished();
+
+        // СНИМАЕМ БЛОКИРОВКУ
+        Controller.CanMove = true;
+        Controller.CanRotate = true;
     }
 
     private void PerformHitCheck() {

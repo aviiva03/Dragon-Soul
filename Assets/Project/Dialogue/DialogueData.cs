@@ -30,10 +30,12 @@ public class DialogueNode {
     [TextArea(3, 8)]
     public string text;
 
+    [Header("Cinematic (Optional)")]
+    [Tooltip("Точное имя камеры в иерархии")]
+    public string overrideCameraName;
+
     [Header("Choices & Flow")]
     public List<DialogueChoice> choices = new List<DialogueChoice>();
-
-    [Tooltip("Куда идти, если выборов нет (или это конец диалога — напиши END)")]
     public string nextNodeId;
 }
 

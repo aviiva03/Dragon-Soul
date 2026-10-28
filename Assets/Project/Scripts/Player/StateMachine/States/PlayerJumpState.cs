@@ -11,11 +11,14 @@ public class PlayerJumpState : PlayerState {
         Controller.ResetCoyoteTimer();
         Controller.ResetJumpBuffer();
 
+        // БЛОКИРУЕМ ПОВОРОТ В ВОЗДУХЕ
+        Controller.CanRotate = false;
+
         Animator.PlayJump();
     }
 
     public override void Update() {
-        // Атака в воздухе не разрешена
+        // Движение работает, но повернуть нельзя
         Controller.ApplyMovement();
 
         if (Controller.VerticalVelocity <= 0f) {
@@ -26,5 +29,9 @@ public class PlayerJumpState : PlayerState {
         if (Controller.WantsToDodge) {
             StateMachine.ChangeState(Factory.Dodge);
         }
+    }
+
+    public override void Exit() {
+        Controller.CanRotate = true; // Возвращаем поворот
     }
 }

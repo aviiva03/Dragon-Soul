@@ -1,7 +1,7 @@
 using UnityEngine;
 
 public class SaveLoader : MonoBehaviour {
-    private void Start() {
+    private void Awake() {
         // При старте игры загружаем данные
         GameData loadedData = SaveSystem.LoadGame();
 

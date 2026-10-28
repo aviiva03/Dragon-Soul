@@ -17,7 +17,7 @@ public class PlayerController : MonoBehaviour {
     [SerializeField] private float _maxSlopeAngle = 45f;
     [SerializeField] private float _slopeDownRayLength = 0.5f;
 
-    // ---- Ссылки ----
+    // Ссылки
     public PlayerStats Stats => _stats;
     public PlayerCamera CameraRef => _camera;
     public PlayerHitbox Hitbox => _hitbox;
@@ -25,7 +25,7 @@ public class PlayerController : MonoBehaviour {
     public CharacterController CharacterController { get; private set; }
     public PlayerAnimator Animator { get; private set; }
 
-    // ---- Ввод ----
+    // Ввод
     private PlayerControls _input;
     private Vector2 _moveInput;
     private bool _jumpPressedThisFrame;
@@ -34,16 +34,20 @@ public class PlayerController : MonoBehaviour {
     private bool _lightAttackPressedThisFrame;
     private bool _heavyAttackPressedThisFrame;
 
-    // ---- Двойное нажатие W для спринта ----
+    // Двойное нажатие W для спринта
     private float _lastWPressedTime = -999f;
     private const float DoubleTapWindow = 0.3f;
     private bool _isSprintingByDoubleTap;
+
+    // ---- Флаги блокировки (главная фича) ----
+    public bool CanMove { get; set; } = true;
+    public bool CanRotate { get; set; } = true;
 
     // ---- Публичные свойства ----
     public Vector2 MoveInput => _moveInput;
     public bool HasMoveInput => _moveInput.sqrMagnitude > 0.01f;
     public bool IsGrounded { get; private set; }
-    private bool HasSword => PlayerProgress.Instance != null && PlayerProgress.Instance.HasSword;
+    public bool HasSword => PlayerProgress.Instance != null && PlayerProgress.Instance.HasSword;
 
     public bool WantsToJump => _jumpPressedThisFrame && _coyoteTimer > 0f;
     public bool WantsToDodge => _dodgePressedThisFrame && Time.time - _lastDodgeTime > _stats.DodgeCooldown && _stats.HasStamina(_stats.DodgeStaminaCost);
@@ -103,10 +107,6 @@ public class PlayerController : MonoBehaviour {
         _stateMachine.Initialize(_factory.Idle);
     }
 
-    private void Start() {
-        if (_input != null) _input.Player.Enable();
-    }
-
     private void _inputSetup() {
         _input = new PlayerControls();
 
@@ -142,6 +142,10 @@ public class PlayerController : MonoBehaviour {
     private void OnDisable() => _input.Player.Disable();
 
     private void Update() {
+        if (IsAttacking) {
+            _moveInput = Vector2.zero;
+        }
+
         UpdateGrounded();
         UpdateCoyoteTimer();
         UpdateJumpBuffer();
@@ -160,10 +164,6 @@ public class PlayerController : MonoBehaviour {
         _jumpPressedThisFrame = false;
         _dodgePressedThisFrame = false;
         _jumpReleased = false;
-
-        if (_lightAttackPressedThisFrame) {
-            Debug.Log($"[Attack Check] Флаг есть. Меч: {HasSword}. В атаке: {IsAttacking}. Хочет атаковать: {WantsLightAttack}");
-        }
     }
 
     private void UpdateGrounded() {
@@ -220,12 +220,18 @@ public class PlayerController : MonoBehaviour {
     }
 
     public void ApplyMovement() {
-        if (IsAttacking) {
+        if (!CanMove || IsAttacking) {
             MoveDirection = Vector3.zero;
             return;
         }
 
         Vector3 inputDir = GetCameraRelativeMoveDirection();
+
+        // Блокируем поворот, если это запрещено
+        if (CanRotate && inputDir.sqrMagnitude > 0.01f) {
+            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(inputDir), _stats.RotationSpeed * Time.deltaTime);
+        }
+
         float targetSpeed = WantsToSprint ? _stats.RunSpeed : _stats.WalkSpeed;
         float currentSpeed = MoveDirection.magnitude;
         float desiredSpeed = inputDir.magnitude * targetSpeed;
@@ -233,7 +239,11 @@ public class PlayerController : MonoBehaviour {
 
         if (inputDir.sqrMagnitude > 0.01f) {
             MoveDirection = inputDir.normalized * newSpeed;
-            transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(inputDir), _stats.RotationSpeed * Time.deltaTime);
+
+            // Блокировка поворота (например, в прыжке или во время атаки)
+            if (CanRotate) {
+                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(inputDir), _stats.RotationSpeed * Time.deltaTime);
+            }
         } else {
             MoveDirection = Vector3.MoveTowards(MoveDirection, Vector3.zero, _stats.Acceleration * Time.deltaTime);
         }
@@ -242,7 +252,6 @@ public class PlayerController : MonoBehaviour {
     }
 
     public void MoveCharacter(Vector3 delta) => CharacterController.Move(delta);
-
     public Vector3 GetCameraRelativeMoveDirection() => _camera.PlanarForward * _moveInput.y + _camera.PlanarRight * _moveInput.x;
 
     public void StartStep(Vector3 direction, float distance, float duration) {

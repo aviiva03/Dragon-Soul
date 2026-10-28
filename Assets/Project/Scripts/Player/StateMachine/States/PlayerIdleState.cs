@@ -12,6 +12,8 @@ public class PlayerIdleState : PlayerState {
     }
 
     public override void Update() {
+        if (Controller.IsAttacking) return;
+
         if (Controller.WantsLightAttack) {
             StateMachine.ChangeState(Factory.LightAttack);
             return;

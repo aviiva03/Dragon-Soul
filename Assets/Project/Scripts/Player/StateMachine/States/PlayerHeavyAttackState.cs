@@ -13,6 +13,10 @@ public class PlayerHeavyAttackState : PlayerState {
         : base(c, m, f) { }
 
     public override void Enter() {
+        Controller.CanMove = false;
+        Controller.CanRotate = false;
+        Controller.MoveDirection = Vector3.zero;
+
         Controller.SetAttacking(true);
         Controller.ResetCombo();
         Controller.ConsumeAttackBuffer();
@@ -85,6 +89,10 @@ public class PlayerHeavyAttackState : PlayerState {
         Controller.SetAttacking(false);
         // Запускаем таймер исчезновения меча
         if (Controller.Sword != null) Controller.Sword.AttackFinished();
+
+        // СНИМАЕМ БЛОКИРОВКУ
+        Controller.CanMove = true;
+        Controller.CanRotate = true;
     }
 
     private System.Collections.IEnumerator DisappearDelayed(float delay) {

@@ -6,6 +6,8 @@ public class PlayerRunState : PlayerState {
         : base(c, m, f) { }
 
     public override void Update() {
+        if (Controller.IsAttacking) return;
+
         if (Controller.WantsLightAttack) {
             StateMachine.ChangeState(Factory.LightAttack);
             return;
@@ -31,7 +33,6 @@ public class PlayerRunState : PlayerState {
             return;
         }
 
-        // Спринт: тратим стамину только здесь
         if (Controller.WantsToSprint) {
             Controller.ConsumeStamina(Stats.StaminaDrainPerSec * Time.deltaTime);
         }
