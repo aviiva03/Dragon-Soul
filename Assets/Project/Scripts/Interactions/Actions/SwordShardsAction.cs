@@ -161,7 +161,13 @@ public class SwordShardsAction : InteractAction {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        Destroy(gameObject);
+        // --- ЗАВЕРШАЕМ ВЗАИМОДЕЙСТВИЕ ---
+        var interactable = GetComponent<InteractableObject>();
+        if (interactable != null) {
+            interactable.CompleteInteractionAndSave(); // Он сам удалит осколки, если стоит галочка
+        } else {
+            Destroy(gameObject); // На всякий случай, если InteractableObject нет
+        }
     }
 
     private void SetPlayerVisible(PlayerController player, bool visible) {

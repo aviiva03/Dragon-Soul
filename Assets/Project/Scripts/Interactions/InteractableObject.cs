@@ -5,11 +5,29 @@ public class InteractableObject : MonoBehaviour, IInteractable {
     [SerializeField] private string _promptText = "Взаимодействовать";
     [SerializeField] private bool _interactOnlyOnce = true;
 
+    [Header("Persistence")]
+    [Tooltip("Уникальный ID (например, Chest_01). Если пусто — не сохраняется.")]
+    [SerializeField] private string _uniqueID;
+
+    [Tooltip("Удалить объект полностью после завершения взаимодействия? (Если нет — просто выключит коллайдер)")]
+    [SerializeField] private bool _destroyObjectAfterInteraction = false;
+
     [Header("Action")]
-    [Tooltip("Какой скрипт запустить? Перетащи сюда объект со скриптом-наследником InteractAction")]
     [SerializeField] private InteractAction _action;
 
     private bool _hasInteracted = false;
+
+    private void Start() {
+        if (!string.IsNullOrEmpty(_uniqueID) && PlayerProgress.Instance != null) {
+            if (PlayerProgress.Instance.IsObjectDestroyed(_uniqueID)) {
+                if (_destroyObjectAfterInteraction) {
+                    Destroy(gameObject);
+                } else {
+                    DisableInteraction();
+                }
+            }
+        }
+    }
 
     public string GetPrompt() => _promptText;
 
@@ -23,10 +41,34 @@ public class InteractableObject : MonoBehaviour, IInteractable {
 
         _hasInteracted = true;
 
+        // Выключаем ТОЛЬКО триггер на этом объекте
+        DisableColliders();
+
         if (_action != null) {
             _action.Execute();
-        } else {
-            Debug.LogWarning($"[{name}] Не назначен InteractAction!");
+        }
+    }
+
+    public void CompleteInteractionAndSave() {
+        if (!string.IsNullOrEmpty(_uniqueID) && PlayerProgress.Instance != null) {
+            PlayerProgress.Instance.RegisterDestroyedObject(_uniqueID);
+        }
+
+        if (_destroyObjectAfterInteraction) {
+            Destroy(gameObject);
+        }
+    }
+
+    private void DisableInteraction() {
+        DisableColliders();
+        _hasInteracted = true;
+    }
+
+    private void DisableColliders() {
+        // ИСПРАВЛЕНИЕ ЗДЕСЬ: Ищем коллайдер ТОЛЬКО на самом объекте (без Children)
+        var col = GetComponent<Collider>();
+        if (col != null) {
+            col.enabled = false;
         }
     }
 }

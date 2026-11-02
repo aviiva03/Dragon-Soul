@@ -28,6 +28,10 @@ public class ChestAction : InteractAction {
     [Tooltip("Точка, куда телепортируется игрок для разговора (лицом к дракону)")]
     [SerializeField] private Transform _playerTeleportPoint; // НОВОЕ ПОЛЕ
 
+    [Header("Save Settings")]
+    [Tooltip("Уникальный ID сундука (например, Chest_Temple_01)")]
+    [SerializeField] private string _chestSaveID;
+
     private bool _isPlaying = false;
 
     public override void Execute() {
@@ -100,14 +104,17 @@ public class ChestAction : InteractAction {
         }
 
         // 5. Выключаем дракона
-        if (_biuModel != null) {
-            _biuModel.SetActive(false);
+        if (_biuModel != null) _biuModel.SetActive(false);
+
+        // --- ЗАВЕРШАЕМ ВЗАИМОДЕЙСТВИЕ ---
+        var interactable = GetComponent<InteractableObject>();
+        if (interactable != null) {
+            interactable.CompleteInteractionAndSave();
         }
 
         // 6. Возвращаем управление
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
-
         if (player != null) player.enabled = true;
 
         _isPlaying = false;

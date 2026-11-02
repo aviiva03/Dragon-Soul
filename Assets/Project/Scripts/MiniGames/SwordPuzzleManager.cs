@@ -1,3 +1,4 @@
+using Cinemachine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -15,6 +16,11 @@ public class SwordPuzzleManager : MonoBehaviour {
     [SerializeField] private Transform _slotsParent;
     [SerializeField] private GameObject _puzzlePanel;
 
+    [Header("Camera")]
+    [SerializeField] private CinemachineFreeLook _playerCamera; // Перетащи сюда камеру игрока
+
+    private CinemachineBrain _brain; // Добавим мозг камеры
+
     public event Action OnPuzzleCompleted;
 
     private List<PuzzlePiece> _pieces = new List<PuzzlePiece>();
@@ -27,6 +33,9 @@ public class SwordPuzzleManager : MonoBehaviour {
     private void Awake() {
         if (Instance != null && Instance != this) Destroy(gameObject);
         else Instance = this;
+
+        // Находим CinemachineBrain на главной камере
+        if (Camera.main != null) _brain = Camera.main.GetComponent<CinemachineBrain>();
     }
 
     private void Start() {
@@ -49,7 +58,10 @@ public class SwordPuzzleManager : MonoBehaviour {
 
         if (_assembledSwordImage != null) _assembledSwordImage.SetActive(false);
 
-        // --- РАЗБЛОКИРУЕМ КУРСОР ДЛЯ МИНИ-ИГРЫ ---
+        // --- БЛОКИРУЕМ КАМЕРУ ---
+        if (_brain != null) _brain.enabled = false; // Замораживаем мозг Cinemachine
+        if (_playerCamera != null) _playerCamera.enabled = false; // Отключаем управление камерой
+
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
@@ -92,11 +104,14 @@ public class SwordPuzzleManager : MonoBehaviour {
     }
 
     private IEnumerator FinishPuzzleRoutine() {
-        yield return new WaitForSeconds(1.5f); // Даем полюбоваться собранным мечом
+        yield return new WaitForSeconds(1.5f);
 
         if (_puzzlePanel != null) _puzzlePanel.SetActive(false);
 
-        // --- БЛОКИРУЕМ КУРСОР ОБРАТНО (ЭТО СДЕЛАЕТ И КАТ-СЦЕНА, НО НА ВСЯКИЙ СЛУЧАЙ) ---
+        // --- ВОЗВРАЩАЕМ КАМЕРУ ---
+        if (_playerCamera != null) _playerCamera.enabled = true;
+        if (_brain != null) _brain.enabled = true; // Включаем обратно
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
