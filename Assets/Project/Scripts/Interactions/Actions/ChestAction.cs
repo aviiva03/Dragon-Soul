@@ -1,7 +1,6 @@
 using System.Collections;
 using UnityEngine;
 using Cinemachine;
-using TMPro;
 using UnityEngine.UI;
 
 public class ChestAction : InteractAction {
@@ -26,11 +25,7 @@ public class ChestAction : InteractAction {
 
     [Header("Player Position")]
     [Tooltip("Точка, куда телепортируется игрок для разговора (лицом к дракону)")]
-    [SerializeField] private Transform _playerTeleportPoint; // НОВОЕ ПОЛЕ
-
-    [Header("Save Settings")]
-    [Tooltip("Уникальный ID сундука (например, Chest_Temple_01)")]
-    [SerializeField] private string _chestSaveID;
+    [SerializeField] private Transform _playerTeleportPoint;
 
     private bool _isPlaying = false;
 
@@ -51,7 +46,7 @@ public class ChestAction : InteractAction {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        // 1. Анимация сундука (телепорт лучше делать до или во время нее)
+        // 1. Анимация сундука
         if (_chestAnimator != null && !string.IsNullOrEmpty(_openTriggerName)) {
             _chestAnimator.SetTrigger(_openTriggerName);
             yield return new WaitForSeconds(1.0f);
@@ -88,14 +83,13 @@ public class ChestAction : InteractAction {
             _biuModel.SetActive(true);
         }
 
-        // 4. Запускаем диалог (и передаем точку телепорта!)
+        // 4. Запускаем диалог
         if (DialogueManager.Instance != null && _memoryDialogue != null) {
             TalkingAnimator[] characters = null;
             if (_biuAnimator != null) {
                 characters = new TalkingAnimator[] { _biuAnimator };
             }
 
-            // Передаем _playerTeleportPoint в 4-й параметр!
             DialogueManager.Instance.StartDialogue(_memoryDialogue, _memoryCamera, null, _playerTeleportPoint, characters);
 
             while (DialogueManager.Instance.IsDialogueActive) {

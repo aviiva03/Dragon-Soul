@@ -40,9 +40,7 @@ public class InteractableObject : MonoBehaviour, IInteractable {
         if (!CanInteract()) return;
 
         _hasInteracted = true;
-
-        // Выключаем ТОЛЬКО триггер на этом объекте
-        DisableColliders();
+        DisableColliders(); // Выключаем ТОЛЬКО триггер на этом объекте
 
         if (_action != null) {
             _action.Execute();
@@ -65,7 +63,6 @@ public class InteractableObject : MonoBehaviour, IInteractable {
     }
 
     private void DisableColliders() {
-        // ИСПРАВЛЕНИЕ ЗДЕСЬ: Ищем коллайдер ТОЛЬКО на самом объекте (без Children)
         var col = GetComponent<Collider>();
         if (col != null) {
             col.enabled = false;

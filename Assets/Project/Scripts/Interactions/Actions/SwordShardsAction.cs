@@ -2,7 +2,6 @@ using System.Collections;
 using UnityEngine;
 using Cinemachine;
 using TMPro;
-using UnityEngine.UI;
 
 public class SwordShardsAction : InteractAction {
 
@@ -41,7 +40,10 @@ public class SwordShardsAction : InteractAction {
         }
 
         _playerCam = FindObjectOfType<CinemachineFreeLook>();
-        _brain = Camera.main.GetComponent<CinemachineBrain>();
+
+        if (Camera.main != null) {
+            _brain = Camera.main.GetComponent<CinemachineBrain>();
+        }
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -105,7 +107,6 @@ public class SwordShardsAction : InteractAction {
             SwordPuzzleManager.Instance.OnPuzzleCompleted += () => puzzleFinished = true;
             SwordPuzzleManager.Instance.StartPuzzle();
         } else {
-            Debug.LogError("[Shards] SwordPuzzleManager не найден на сцене!");
             puzzleFinished = true;
         }
 
@@ -161,10 +162,10 @@ public class SwordShardsAction : InteractAction {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        // --- ЗАВЕРШАЕМ ВЗАИМОДЕЙСТВИЕ ---
+        // Завершаем взаимодействие
         var interactable = GetComponent<InteractableObject>();
         if (interactable != null) {
-            interactable.CompleteInteractionAndSave(); // Он сам удалит осколки, если стоит галочка
+            interactable.CompleteInteractionAndSave();
         } else {
             Destroy(gameObject); // На всякий случай, если InteractableObject нет
         }

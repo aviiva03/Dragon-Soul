@@ -21,7 +21,7 @@ public class HealthBarUI : MonoBehaviour {
         _health.OnHealthChanged += UpdateBar;
         _health.OnDied += HandleDeath;
 
-        // Начальное значение
+        // Инициализация
         UpdateBar(_health.Current, _health.Max);
     }
 
@@ -41,6 +41,6 @@ public class HealthBarUI : MonoBehaviour {
     }
 
     private void HandleDeath() {
-        Debug.Log("Игрок умер!");
+        // Логика при смерти игрока (если нужна)
     }
 }

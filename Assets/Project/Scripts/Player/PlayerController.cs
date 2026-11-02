@@ -17,6 +17,10 @@ public class PlayerController : MonoBehaviour {
     [SerializeField] private float _maxSlopeAngle = 45f;
     [SerializeField] private float _slopeDownRayLength = 0.5f;
 
+    [Header("Combat Input Settings")]
+    [Tooltip("Сколько секунд нужно держать ЛКМ, чтобы сработала тяжелая атака")]
+    [SerializeField] private float _heavyAttackHoldTime = 0.3f;
+
     // Ссылки
     public PlayerStats Stats => _stats;
     public PlayerCamera CameraRef => _camera;
@@ -28,68 +32,71 @@ public class PlayerController : MonoBehaviour {
     // Ввод
     private PlayerControls _input;
     private Vector2 _moveInput;
-    private bool _jumpPressedThisFrame;
-    private bool _dodgePressedThisFrame;
-    private bool _jumpReleased;
-    private bool _lightAttackPressedThisFrame;
-    private bool _heavyAttackPressedThisFrame;
 
-    // Двойное нажатие W для спринта
-    private float _lastWPressedTime = -999f;
-    private const float DoubleTapWindow = 0.3f;
-    private bool _isSprintingByDoubleTap;
+    // Таймеры ввода атаки
+    private float _lightAttackHoldTimer;
+    private bool _isHoldingAttack;
+    private bool _lightAttackReleased;
+    private bool _heavyAttackTriggered; // Флаг: тяжелая атака уже сработала в этом зажатии
 
-    // ---- Флаги блокировки (главная фича) ----
+    // Флаги блокировки
     public bool CanMove { get; set; } = true;
     public bool CanRotate { get; set; } = true;
 
-    // ---- Публичные свойства ----
+    // Публичные свойства
     public Vector2 MoveInput => _moveInput;
     public bool HasMoveInput => _moveInput.sqrMagnitude > 0.01f;
     public bool IsGrounded { get; private set; }
     public bool HasSword => PlayerProgress.Instance != null && PlayerProgress.Instance.HasSword;
 
-    public bool WantsToJump => _jumpPressedThisFrame && _coyoteTimer > 0f;
-    public bool WantsToDodge => _dodgePressedThisFrame && Time.time - _lastDodgeTime > _stats.DodgeCooldown && _stats.HasStamina(_stats.DodgeStaminaCost);
-    public bool WantsToSprint => _isSprintingByDoubleTap && HasMoveInput && IsGrounded && _stats.HasStamina(1f);
-    public bool WantsLightAttack => HasSword && _lightAttackPressedThisFrame && !IsAttacking;
-    public bool WantsHeavyAttack => HasSword && _heavyAttackPressedThisFrame && !IsAttacking && _stats.HasStamina(_stats.HeavyAttackStaminaCost);
+    // Проверки действий
+    public bool WantsToJump => Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame && _coyoteTimer > 0f;
+    public bool WantsToDodge => Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame && Time.time - _lastDodgeTime > _stats.DodgeCooldown && _stats.HasStamina(_stats.DodgeStaminaCost);
 
-    // ---- Состояние движения ----
+    // Спринт ТОЛЬКО от зажатия ПКМ (двойное W убрано)
+    public bool WantsToSprint => Mouse.current != null && Mouse.current.rightButton.isPressed && HasMoveInput && IsGrounded && _stats.HasStamina(1f);
+
+    // Атаки
+    public bool WantsLightAttack => HasSword && _lightAttackReleased && !IsAttacking;
+
+    // Тяжелая атака срабатывает, только если еще не срабатывала за это зажатие
+    public bool WantsHeavyAttack => HasSword && _isHoldingAttack && _lightAttackHoldTimer >= _heavyAttackHoldTime && !_heavyAttackTriggered && !IsAttacking;
+
+    // Состояние движения
     public Vector3 MoveDirection { get; set; }
     public float VerticalVelocity { get; private set; }
     public Vector3 DodgeDirection { get; private set; }
     public float LastFallVelocity { get; private set; }
     public bool IsAttacking { get; private set; }
 
-    // ---- Invulnerability ----
+    // Invulnerability
     private float _invulnerabilityTimer;
     public bool IsInvulnerable => _invulnerabilityTimer > 0f;
 
-    // ---- Плавный шаг ----
+    // Плавный шаг (для атак)
     private Vector3 _stepDirection;
     private float _stepSpeed;
     private float _stepTimeLeft;
     public bool IsStepping => _stepTimeLeft > 0f;
 
-    // ---- Таймеры ----
+    // Таймеры
     private float _coyoteTimer;
     private float _coyoteLockTimer;
     private float _jumpBufferTimer;
     private float _lastDodgeTime = -999f;
     private bool _wasGroundedLastFrame;
 
-    // ---- Комбо ----
+    // Комбо
     private int _lightAttackComboIndex;
     private float _comboWindowTimer;
     public int LightAttackComboIndex => _lightAttackComboIndex;
     public bool IsInComboWindow => _comboWindowTimer > 0f;
 
-    // ---- Attack buffer ----
+    // Attack buffer
     private float _attackBufferTimer;
     public bool HasBufferedAttack => _attackBufferTimer > 0f;
 
-    // ---- FSM ----
+    // FSM
     private PlayerStateMachine _stateMachine;
     private PlayerStateFactory _factory;
 
@@ -110,38 +117,47 @@ public class PlayerController : MonoBehaviour {
     private void _inputSetup() {
         _input = new PlayerControls();
 
+        // --- ДВИЖЕНИЕ ---
         _input.Player.Move.performed += ctx => {
             _moveInput = ctx.ReadValue<Vector2>();
-            if (_moveInput.y > 0.5f) {
-                if (Time.time - _lastWPressedTime < DoubleTapWindow) _isSprintingByDoubleTap = true;
-                _lastWPressedTime = Time.time;
-            }
         };
 
         _input.Player.Move.canceled += ctx => {
             _moveInput = Vector2.zero;
-            _isSprintingByDoubleTap = false;
         };
 
+        // --- ПРЫЖОК ---
         _input.Player.Jump.performed += ctx => {
-            _jumpPressedThisFrame = true;
             _jumpBufferTimer = _stats.JumpBufferTime;
         };
-        _input.Player.Jump.canceled += ctx => _jumpReleased = true;
 
-        _input.Player.Dodge.performed += ctx => _dodgePressedThisFrame = true;
-
-        _input.Player.LightAttack.performed += ctx => {
-            _lightAttackPressedThisFrame = true;
+        // --- АТАКА (ЛКМ) ---
+        _input.Player.LightAttack.started += ctx => {
+            _isHoldingAttack = true;
+            _lightAttackHoldTimer = 0f;
+            _lightAttackReleased = false;
+            _heavyAttackTriggered = false; // Сбрасываем флаг при новом зажатии
             _attackBufferTimer = _stats.AttackBufferTime;
         };
-        _input.Player.HeavyAttack.performed += ctx => _heavyAttackPressedThisFrame = true;
+
+        _input.Player.LightAttack.canceled += ctx => {
+            _isHoldingAttack = false;
+            // Если отпустили быстро — это легкая атака
+            if (_lightAttackHoldTimer < _heavyAttackHoldTime) {
+                _lightAttackReleased = true;
+            }
+        };
     }
 
     private void OnEnable() => _input.Player.Enable();
     private void OnDisable() => _input.Player.Disable();
 
     private void Update() {
+        // Тикаем таймер тяжелой атаки
+        if (_isHoldingAttack) {
+            _lightAttackHoldTimer += Time.deltaTime;
+        }
+
         if (IsAttacking) {
             _moveInput = Vector2.zero;
         }
@@ -159,11 +175,13 @@ public class PlayerController : MonoBehaviour {
         _stats.RegenStamina(Time.deltaTime);
         UpdateAnimator();
 
-        _lightAttackPressedThisFrame = false;
-        _heavyAttackPressedThisFrame = false;
-        _jumpPressedThisFrame = false;
-        _dodgePressedThisFrame = false;
-        _jumpReleased = false;
+        // Сброс одноразовых флагов
+        _lightAttackReleased = false;
+    }
+
+    // Вызывается из PlayerHeavyAttackState, чтобы зафиксировать, что атака уже была
+    public void MarkHeavyAttackTriggered() {
+        _heavyAttackTriggered = true;
     }
 
     private void UpdateGrounded() {
@@ -213,7 +231,11 @@ public class PlayerController : MonoBehaviour {
 
         float multiplier = 1f;
         if (VerticalVelocity < 0f) multiplier = _stats.FallGravityMultiplier;
-        else if (_jumpReleased) multiplier = _stats.LowJumpMultiplier;
+
+        // Учитываем отпускание прыжка (если есть прыжок)
+        if (Keyboard.current != null && Keyboard.current.spaceKey.wasReleasedThisFrame) {
+            multiplier = _stats.LowJumpMultiplier;
+        }
 
         VerticalVelocity += _stats.Gravity * multiplier * Time.deltaTime;
         CharacterController.Move(Vector3.up * VerticalVelocity * Time.deltaTime);
@@ -227,7 +249,6 @@ public class PlayerController : MonoBehaviour {
 
         Vector3 inputDir = GetCameraRelativeMoveDirection();
 
-        // Блокируем поворот, если это запрещено
         if (CanRotate && inputDir.sqrMagnitude > 0.01f) {
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(inputDir), _stats.RotationSpeed * Time.deltaTime);
         }
@@ -239,11 +260,6 @@ public class PlayerController : MonoBehaviour {
 
         if (inputDir.sqrMagnitude > 0.01f) {
             MoveDirection = inputDir.normalized * newSpeed;
-
-            // Блокировка поворота (например, в прыжке или во время атаки)
-            if (CanRotate) {
-                transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(inputDir), _stats.RotationSpeed * Time.deltaTime);
-            }
         } else {
             MoveDirection = Vector3.MoveTowards(MoveDirection, Vector3.zero, _stats.Acceleration * Time.deltaTime);
         }

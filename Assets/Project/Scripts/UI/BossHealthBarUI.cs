@@ -18,9 +18,8 @@ public class BossHealthBarUI : MonoBehaviour {
         _bossHealth.OnDied += HandleDeath;
 
         UpdateBar(_bossHealth.Current, _bossHealth.Max);
-        _canvasGroup.alpha = 0f; // Начинаем с прозрачного
+        _canvasGroup.alpha = 0f;
 
-        // Плавное появление
         StartCoroutine(FadeIn());
     }
 

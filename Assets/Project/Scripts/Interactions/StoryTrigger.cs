@@ -8,7 +8,7 @@ public class StoryTrigger : MonoBehaviour {
         if (_triggered) return;
 
         _triggered = true;
-        GetComponent<Collider>().enabled = false; // Отключаем, чтобы не сработал дважды
+        GetComponent<Collider>().enabled = false;
 
         if (StoryManager.Instance != null) {
             StoryManager.Instance.StartStage1();

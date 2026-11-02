@@ -12,16 +12,14 @@ public class BossPhaseController : MonoBehaviour {
     public event Action<BossPhase> OnPhaseChanged;
 
     private void Start() {
-        if (_health == null || _phases == null || _phases.Length == 0)
-            return;
+        if (_health == null || _phases == null || _phases.Length == 0) return;
 
         _health.OnHealthChanged += HandleHealthChanged;
         UpdatePhase(_health.Current, _health.Max);
     }
 
     private void OnDestroy() {
-        if (_health != null)
-            _health.OnHealthChanged -= HandleHealthChanged;
+        if (_health != null) _health.OnHealthChanged -= HandleHealthChanged;
     }
 
     private void HandleHealthChanged(int current, int max) {
@@ -35,7 +33,6 @@ public class BossPhaseController : MonoBehaviour {
         if (newPhase == null || newPhase == _currentPhase) return;
 
         _currentPhase = newPhase;
-        Debug.Log($"Фаза босса: {_currentPhase.phaseName}");
         OnPhaseChanged?.Invoke(_currentPhase);
     }
 
