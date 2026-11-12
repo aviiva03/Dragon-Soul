@@ -100,6 +100,10 @@ public class GameManager : MonoBehaviour {
             zone.ResetZone();
         }
 
+        if (StoryManager.Instance != null) {
+            StoryManager.Instance.ResetArena();
+        }
+
         var movement = _player.GetComponent<PlayerController>();
         var animator = _player.GetComponent<PlayerAnimator>();
         if (movement != null) movement.enabled = true;

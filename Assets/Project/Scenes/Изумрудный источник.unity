@@ -2739,7 +2739,7 @@ GameObject:
   m_Component:
   - component: {fileID: 399248778}
   m_Layer: 0
-  m_Name: RespawnPoints
+  m_Name: Checkpoints
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8315,7 +8315,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1216513796
 Transform:
   m_ObjectHideFlags: 0
@@ -10024,6 +10024,7 @@ MonoBehaviour:
   _biuAnimator: {fileID: 331465323}
   _memoryDialogue: {fileID: 11400000, guid: 2db2c903aee45ce4cb2246f65f892773, type: 2}
   _memoryCamera: {fileID: 1286411664}
+  _playerCamera: {fileID: 0}
   _playerTeleportPoint: {fileID: 1700025930}
 --- !u!114 &1435083401
 MonoBehaviour:

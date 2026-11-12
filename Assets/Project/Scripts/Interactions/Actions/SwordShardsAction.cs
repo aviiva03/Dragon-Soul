@@ -55,6 +55,7 @@ public class SwordShardsAction : InteractAction {
         SetPlayerVisible(player, false);
         if (_hudGroup != null) _hudGroup.alpha = 0f;
 
+        // 1. Затемняем экран (вход в прошлое)
         yield return FadeUI(_fadeGroup, 0f, 1f, _fadeTime);
 
         if (_pastSceneRoot != null) _pastSceneRoot.SetActive(true);
@@ -85,6 +86,7 @@ public class SwordShardsAction : InteractAction {
             yield return null;
         }
 
+        // Показываем текст "Прошлое..."
         _titleText.text = "Прошлое...";
         _titleText.gameObject.SetActive(true);
 
@@ -93,6 +95,7 @@ public class SwordShardsAction : InteractAction {
         _titleText.gameObject.SetActive(false);
         yield return FadeUI(_fadeGroup, 1f, 0f, _fadeTime);
 
+        // Диалог в прошлом
         TalkingAnimator[] talkers = new TalkingAnimator[] { _fatherAnim, _dashenYoungAnim };
         DialogueManager.Instance.StartCinematicDialogue(_memoryDialogue, talkers);
 
@@ -102,6 +105,7 @@ public class SwordShardsAction : InteractAction {
 
         if (_pastSceneRoot != null) _pastSceneRoot.SetActive(false);
 
+        // Мини-игра (Пазл)
         bool puzzleFinished = false;
         if (SwordPuzzleManager.Instance != null) {
             SwordPuzzleManager.Instance.OnPuzzleCompleted += () => puzzleFinished = true;
@@ -114,23 +118,34 @@ public class SwordShardsAction : InteractAction {
             yield return null;
         }
 
+        // ==========================================
+        // ЭТАП 4: ВОЗВРАЩЕНИЕ (С БЛОКИРОВКОЙ КАМЕРЫ)
+        // ==========================================
+
+        // 1. Сначала плавно затемняем экран (пока пазл закрылся, но фильтр еще висит)
         yield return FadeUI(_fadeGroup, 0f, 1f, _fadeTime);
 
+        // 2. Пока экран черный — убираем фильтр и прошлое
         if (_filterGroup != null) _filterGroup.gameObject.SetActive(false);
 
+        // 3. Блокируем мозг камеры, чтобы она не дернулась
+        if (_brain != null) _brain.enabled = false;
+
+        // 4. Меняем камеры (возвращаем камеру игрока)
         if (_pastCamera != null) _pastCamera.enabled = false;
         if (_playerCam != null) {
             _playerCam.enabled = true;
             _playerCam.Priority = 10;
         }
 
+        // 5. Включаем мозг и принудительно ставим его на камеру игрока (экран ЧЕРНЫЙ, игрок не видит рывка)
         if (_brain != null) {
             _brain.m_DefaultBlend.m_Time = 0f;
             _brain.enabled = true;
 
             yield return null;
 
-            if (_playerCam != null) {
+            if (_playerCam != null && Camera.main != null) {
                 Camera.main.transform.position = _playerCam.transform.position;
                 Camera.main.transform.rotation = _playerCam.transform.rotation;
             }
@@ -138,12 +153,14 @@ public class SwordShardsAction : InteractAction {
             yield return null;
         }
 
+        // 6. Показываем текст "Возвращение..."
         _titleText.text = "Возвращение в настоящее...";
         _titleText.gameObject.SetActive(true);
 
         yield return new WaitForSeconds(_titleHoldTime);
         _titleText.gameObject.SetActive(false);
 
+        // 7. Возвращаем игрока (он снова на сцене, но управление пока выключено)
         SetPlayerVisible(player, true);
         if (_hudGroup != null) _hudGroup.alpha = 1f;
 
@@ -157,6 +174,7 @@ public class SwordShardsAction : InteractAction {
 
         if (PlayerProgress.Instance != null) PlayerProgress.Instance.GiveSword();
 
+        // 8. ТОЛЬКО ТЕПЕРЬ убираем черный экран (игрок начинает видеть игру и может крутить камеру)
         yield return FadeUI(_fadeGroup, 1f, 0f, _fadeTime);
 
         Cursor.lockState = CursorLockMode.Locked;
@@ -167,7 +185,7 @@ public class SwordShardsAction : InteractAction {
         if (interactable != null) {
             interactable.CompleteInteractionAndSave();
         } else {
-            Destroy(gameObject); // На всякий случай, если InteractableObject нет
+            Destroy(gameObject);
         }
     }
 

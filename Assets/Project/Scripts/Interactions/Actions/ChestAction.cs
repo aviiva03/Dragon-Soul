@@ -23,11 +23,15 @@ public class ChestAction : InteractAction {
     [SerializeField] private DialogueData _memoryDialogue;
     [SerializeField] private CinemachineVirtualCamera _memoryCamera;
 
+    [Header("Camera")]
+    [SerializeField] private CinemachineFreeLook _playerCamera;
+
     [Header("Player Position")]
     [Tooltip("Точка, куда телепортируется игрок для разговора (лицом к дракону)")]
     [SerializeField] private Transform _playerTeleportPoint;
 
     private bool _isPlaying = false;
+    private CinemachineBrain _brain;
 
     public override void Execute() {
         if (_isPlaying) return;
@@ -46,6 +50,8 @@ public class ChestAction : InteractAction {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
+        if (Camera.main != null) _brain = Camera.main.GetComponent<CinemachineBrain>();
+
         // 1. Анимация сундука
         if (_chestAnimator != null && !string.IsNullOrEmpty(_openTriggerName)) {
             _chestAnimator.SetTrigger(_openTriggerName);
@@ -53,6 +59,9 @@ public class ChestAction : InteractAction {
         } else {
             yield return new WaitForSeconds(1.0f);
         }
+
+        if (_brain != null) _brain.enabled = false;
+        if (_playerCamera != null) _playerCamera.enabled = false;
 
         // 2. Артефакт
         if (_artifactPanel != null) {
@@ -77,6 +86,9 @@ public class ChestAction : InteractAction {
             }
             _artifactPanel.gameObject.SetActive(false);
         }
+
+        if (_playerCamera != null) _playerCamera.enabled = true;
+        if (_brain != null) _brain.enabled = true;
 
         // 3. Включаем дракона Бию
         if (_biuModel != null) {

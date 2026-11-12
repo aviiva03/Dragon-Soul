@@ -8,6 +8,9 @@ public class PlayerProgress : MonoBehaviour {
     public bool HasSword { get; private set; } = false;
     public event Action OnSwordObtained;
 
+    // НОВОЕ: Флаг прохождения арены
+    public bool IsArenaCleared { get; private set; } = false;
+
     private List<string> _destroyedObjects = new List<string>();
     private List<string> _defeatedBosses = new List<string>();
     private List<string> _completedDialogues = new List<string>();
@@ -26,6 +29,13 @@ public class PlayerProgress : MonoBehaviour {
         if (HasSword) return;
         HasSword = true;
         OnSwordObtained?.Invoke();
+        SaveSystem.SaveGame();
+    }
+
+    // --- АРЕНА ---
+    public void SetArenaCleared() {
+        if (IsArenaCleared) return;
+        IsArenaCleared = true;
         SaveSystem.SaveGame();
     }
 
@@ -67,11 +77,11 @@ public class PlayerProgress : MonoBehaviour {
     public GameData GetSaveData() {
         GameData data = new GameData();
         data.hasSword = HasSword;
+        data.isArenaCleared = IsArenaCleared; // Сохраняем флаг
         data.destroyedObjectIDs = _destroyedObjects;
         data.defeatedBossIDs = _defeatedBosses;
         data.completedDialogueIDs = _completedDialogues;
 
-        // Записываем позицию
         if (_hasSavedPosition) {
             data.PlayerPosition = _savedPlayerPosition;
             data.PlayerRotation = _savedPlayerRotation;
@@ -81,6 +91,7 @@ public class PlayerProgress : MonoBehaviour {
 
     public void LoadFromData(GameData data) {
         HasSword = data.hasSword;
+        IsArenaCleared = data.isArenaCleared; // Загружаем флаг
         _destroyedObjects = data.destroyedObjectIDs ?? new List<string>();
         _defeatedBosses = data.defeatedBossIDs ?? new List<string>();
         _completedDialogues = data.completedDialogueIDs ?? new List<string>();

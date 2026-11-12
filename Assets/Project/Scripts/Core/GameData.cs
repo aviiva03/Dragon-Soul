@@ -4,6 +4,7 @@ using UnityEngine;
 [System.Serializable]
 public class GameData {
     public bool hasSword;
+    public bool isArenaCleared;
 
     public float playerPosX;
     public float playerPosY;

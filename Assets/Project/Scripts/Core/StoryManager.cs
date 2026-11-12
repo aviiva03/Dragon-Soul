@@ -27,14 +27,20 @@ public class StoryManager : MonoBehaviour {
     }
 
     private void Start() {
-        // Проверяем, сломана ли стена при загрузке игры
-        if (PlayerProgress.Instance != null && PlayerProgress.Instance.IsObjectDestroyed(_wallID)) {
+        if (PlayerProgress.Instance == null) return;
+
+        if (PlayerProgress.Instance.IsArenaCleared) {
+            if (_wallParent != null) _wallParent.SetActive(false);
+            return;
+        }
+
+        if (PlayerProgress.Instance.IsObjectDestroyed(_wallID)) {
             if (_wallParent != null) _wallParent.SetActive(false);
         }
     }
 
     public void StartStage1() {
-        if (PlayerProgress.Instance != null && PlayerProgress.Instance.IsObjectDestroyed(_wallID)) return;
+        if (PlayerProgress.Instance != null && PlayerProgress.Instance.IsArenaCleared) return;
 
         ClearStealthArea();
 
@@ -44,6 +50,36 @@ public class StoryManager : MonoBehaviour {
                 _enemiesAlive++;
                 var health = enemy.GetComponent<Health>();
                 if (health != null) health.OnDied += OnSmallEnemyDied;
+            }
+        }
+    }
+
+    // --- НОВЫЙ МЕТОД: СБРОС АРЕНЫ ПРИ СМЕРТИ ИГРОКА ---
+    public void ResetArena() {
+        if (PlayerProgress.Instance == null || PlayerProgress.Instance.IsArenaCleared) return;
+
+        // 1. Выключаем боссов (если они были)
+        foreach (var boss in _bosses) {
+            if (boss != null) boss.SetActive(false);
+        }
+        _bossesAlive = 0;
+
+        // 2. Обнуляем мелких и снова их включаем
+        _enemiesAlive = 0;
+        foreach (var enemy in _smallEnemies) {
+            if (enemy != null) {
+                enemy.SetActive(true);
+                _enemiesAlive++;
+
+                // Отписываемся и подписываемся заново, чтобы не было двойных вызовов
+                var health = enemy.GetComponent<Health>();
+                if (health != null) {
+                    health.OnDied -= OnSmallEnemyDied; // Защита от дублей
+                    health.OnDied += OnSmallEnemyDied;
+
+                    // Возрождаем врага, если он был мертв
+                    health.Revive();
+                }
             }
         }
     }
@@ -73,14 +109,16 @@ public class StoryManager : MonoBehaviour {
             string bossID = (i < _bossIDs.Length) ? _bossIDs[i] : boss.name;
 
             if (boss != null) {
-                if (PlayerProgress.Instance != null && PlayerProgress.Instance.IsBossDefeated(bossID)) continue;
-
                 boss.SetActive(true);
                 _bossesAlive++;
 
                 var health = boss.GetComponent<Health>();
                 if (health != null) {
+                    health.OnDied -= () => OnBossDied(bossID); // Защита
                     health.OnDied += () => OnBossDied(bossID);
+
+                    health.Revive(); // Возрождаем босса на случай, если он уже был мертв в прошлой попытке
+
                     if (BossHealthBarManager.Instance != null) {
                         BossHealthBarManager.Instance.RegisterBoss(health, boss.name);
                     }
@@ -95,6 +133,10 @@ public class StoryManager : MonoBehaviour {
     private void OnBossDied(string bossID) {
         _bossesAlive--;
         if (PlayerProgress.Instance != null) PlayerProgress.Instance.RegisterBossDefeated(bossID);
+
+        if (_bossesAlive <= 0) {
+            if (PlayerProgress.Instance != null) PlayerProgress.Instance.SetArenaCleared();
+        }
     }
 
     private void ClearStealthArea() {
