@@ -8,114 +8,86 @@ public class Sword : MonoBehaviour {
     [SerializeField] private AudioClip _appearSound;
     [SerializeField] private AudioClip _disappearSound;
 
-    [Header("Fade Settings")]
-    [SerializeField] private float _fadeDuration = 0.3f;
-    [SerializeField] private float _idleTimeToDisappear = 3f;
+    [Header("Positions (Sockets)")]
+    [SerializeField] private Transform _handSocket;
+    [SerializeField] private Transform _backSocket;
 
-    private Renderer[] _renderers;
-    private MaterialPropertyBlock _mpb;
-    private Coroutine _fadeRoutine;
-    private Coroutine _idleTimerRoutine;
+    [Header("Settings")]
+    [SerializeField] private float _idleTimeToSheath = 3f;
 
-    private int _colorPropertyId = -1;
+    private Coroutine _sheathRoutine;
+    private bool _isInHand = false;
+    private bool _hasSword = false; // Есть ли меч у игрока
 
-    private void Awake() {
-        _renderers = GetComponentsInChildren<Renderer>();
-        _mpb = new MaterialPropertyBlock();
-
-        // Ищем свойство цвета
-        if (_renderers.Length > 0) {
-            Material mat = _renderers[0].sharedMaterial;
-            if (mat.HasProperty("_BaseColor")) _colorPropertyId = Shader.PropertyToID("_BaseColor");
-            else if (mat.HasProperty("_Color")) _colorPropertyId = Shader.PropertyToID("_Color");
-            else Debug.LogWarning("[Sword] Не найдено свойство цвета (Alpha)! Меч будет просто выключаться.");
+    private void Start() {
+        // Проверяем прогресс: если меч еще не получен — полностью скрываем его
+        if (PlayerProgress.Instance != null && !PlayerProgress.Instance.HasSword) {
+            gameObject.SetActive(false);
+            _hasSword = false;
+            return;
         }
 
-        SetAlpha(0f);
-        gameObject.SetActive(false); // Жестко выключаем при старте
+        // Если меч уже есть (загрузились с сейва) — ставим за спину
+        _hasSword = true;
+        EquipSword();
     }
 
-    public void Appear() {
-        if (_idleTimerRoutine != null) StopCoroutine(_idleTimerRoutine);
-
-        if (_audioSource != null && _appearSound != null)
-            _audioSource.PlayOneShot(_appearSound);
-
+    // Вызывается, когда мы получаем меч (из кат-сцены)
+    public void ShowOnPickup() {
+        _hasSword = true;
         gameObject.SetActive(true); // Включаем объект
 
-        if (_fadeRoutine != null) StopCoroutine(_fadeRoutine);
-        _fadeRoutine = StartCoroutine(FadeRoutine(1f));
-    }
-
-    public void ShowOnPickup() {
+        // Сначала появляется в руке
         Appear();
         AttackFinished();
     }
 
+    private void EquipSword() {
+        gameObject.SetActive(true);
+        if (_backSocket != null) {
+            transform.SetParent(_backSocket);
+            transform.localPosition = Vector3.zero;
+            transform.localRotation = Quaternion.identity;
+        }
+        _isInHand = false;
+    }
+
+    public void Appear() {
+        if (!_hasSword) return; // Если меча нет, ничего не делаем
+
+        if (_sheathRoutine != null) StopCoroutine(_sheathRoutine);
+
+        if (_audioSource != null && _appearSound != null)
+            _audioSource.PlayOneShot(_appearSound);
+
+        if (_handSocket != null) {
+            transform.SetParent(_handSocket);
+            transform.localPosition = Vector3.zero;
+            transform.localRotation = Quaternion.identity;
+        }
+        _isInHand = true;
+    }
+
     public void AttackFinished() {
-        if (_idleTimerRoutine != null) StopCoroutine(_idleTimerRoutine);
-        _idleTimerRoutine = StartCoroutine(IdleTimerRoutine());
+        if (!_hasSword || !_isInHand) return;
+
+        if (_sheathRoutine != null) StopCoroutine(_sheathRoutine);
+        _sheathRoutine = StartCoroutine(SheathTimerRoutine());
     }
 
-    private IEnumerator IdleTimerRoutine() {
-        yield return new WaitForSeconds(_idleTimeToDisappear);
-        Disappear();
-    }
+    private IEnumerator SheathTimerRoutine() {
+        yield return new WaitForSeconds(_idleTimeToSheath);
 
-    public void Disappear() {
         if (_audioSource != null && _disappearSound != null)
             _audioSource.PlayOneShot(_disappearSound);
 
-        if (_fadeRoutine != null) StopCoroutine(_fadeRoutine);
-        _fadeRoutine = StartCoroutine(FadeRoutine(0f));
-    }
-
-    private IEnumerator FadeRoutine(float targetAlpha) {
-        if (_colorPropertyId == -1) {
-            // Если прозрачность не работает, просто выключаем/включаем
-            gameObject.SetActive(targetAlpha > 0.5f);
-            yield break;
+        if (_backSocket != null) {
+            transform.SetParent(_backSocket);
+            transform.localPosition = Vector3.zero;
+            transform.localRotation = Quaternion.identity;
         }
 
-        float startAlpha = GetAlpha();
-        float elapsed = 0f;
-
-        while (elapsed < _fadeDuration) {
-            elapsed += Time.deltaTime;
-            float currentAlpha = Mathf.Lerp(startAlpha, targetAlpha, elapsed / _fadeDuration);
-            SetAlpha(currentAlpha);
-            yield return null;
-        }
-
-        SetAlpha(targetAlpha);
-
-        // Если полностью прозрачный — выключаем объект для оптимизации
-        if (targetAlpha <= 0f) {
-            gameObject.SetActive(false);
-        }
-
-        _fadeRoutine = null;
-    }
-
-    private float GetAlpha() {
-        if (_renderers.Length > 0 && _colorPropertyId != -1) {
-            _renderers[0].GetPropertyBlock(_mpb);
-            return _mpb.GetColor(_colorPropertyId).a;
-        }
-        return 0f;
-    }
-
-    private void SetAlpha(float alpha) {
-        if (_colorPropertyId == -1) return;
-
-        foreach (var r in _renderers) {
-            if (r == null) continue;
-
-            r.GetPropertyBlock(_mpb);
-            Color c = r.sharedMaterial.GetColor(_colorPropertyId);
-            c.a = alpha;
-            _mpb.SetColor(_colorPropertyId, c);
-            r.SetPropertyBlock(_mpb);
-        }
+        _isInHand = false;
+        _sheathRoutine = null;
     }
 }

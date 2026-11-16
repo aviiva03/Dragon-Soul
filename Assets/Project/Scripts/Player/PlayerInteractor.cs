@@ -6,14 +6,18 @@ public class PlayerInteractor : MonoBehaviour {
     [SerializeField] private LayerMask _interactLayer;
 
     private IInteractable _currentInteractable;
+    private PlayerController _controller;
+
+    private void Start() {
+        _controller = GetComponent<PlayerController>();
+    }
 
     private void Update() {
         FindInteractable();
 
-        if (_currentInteractable != null && Input.GetKeyDown(KeyCode.F)) {
+        if (_currentInteractable != null && _controller != null && _controller.WantsToInteract) {
             _currentInteractable.Interact();
 
-            // Защита от null
             if (InteractionPromptUI.Instance != null)
                 InteractionPromptUI.Instance.Hide();
 
@@ -22,14 +26,10 @@ public class PlayerInteractor : MonoBehaviour {
     }
 
     private void FindInteractable() {
-        Vector3 origin = transform.position + Vector3.up * 1.0f; // Опустил высоту на уровень груди
+        Vector3 origin = transform.position + Vector3.up * 1.0f;
         Vector3 direction = transform.forward;
 
-        // Рисуем красный луч в окне Scene, чтобы видеть, куда он летит
-        Debug.DrawRay(origin, direction * _interactRange, Color.red);
-
         if (Physics.Raycast(origin, direction, out RaycastHit hit, _interactRange, _interactLayer)) {
-
             if (hit.collider.TryGetComponent(out IInteractable interactable)) {
                 if (interactable.CanInteract()) {
                     if (_currentInteractable != interactable) {

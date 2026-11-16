@@ -26,7 +26,22 @@ MonoBehaviour:
   DodgeDuration: 0.5
   DodgeCooldown: 0.1
   DodgeStaminaCost: 25
+  DodgeInvincibilityDuration: 0.2
+  DodgeInvincibilityStartDelay: 0
   CoyoteTime: 0.15
   JumpBufferTime: 0.15
   FallGravityMultiplier: 2
   LowJumpMultiplier: 3
+  LightAttack1Duration: 1.15
+  LightAttack2Duration: 3
+  LightAttackComboWindow: 0.6
+  LightAttackDamage1: 10
+  LightAttackDamage2: 15
+  HeavyAttackWindup: 0.4
+  HeavyAttackImpact: 1
+  HeavyAttackRecovery: 1.4
+  HeavyAttackDamage: 30
+  HeavyAttackStaminaCost: 25
+  AttackBufferTime: 0.2
+  LightAttackHitboxRadius: 1
+  HeavyAttackHitboxRadius: 1.5

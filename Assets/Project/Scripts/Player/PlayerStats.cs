@@ -50,10 +50,6 @@ public class PlayerStats : ScriptableObject {
     public float LightAttackDamage1 = 10f;
     public float LightAttackDamage2 = 15f;
 
-    [Header("Light Attack Movement")]
-    public float LightAttackStepDistance = 0.5f;
-    public float LightAttackStepDuration = 0.15f;
-
     [Header("Heavy Attack")]
     public float HeavyAttackWindup = 0.4f;
     public float HeavyAttackImpact = 0.2f;
@@ -61,21 +57,15 @@ public class PlayerStats : ScriptableObject {
     public float HeavyAttackDamage = 30f;
     public float HeavyAttackStaminaCost = 25f;
 
-    [Header("Heavy Attack Movement")]
-    public float HeavyAttackStepDistance = 0.8f;
-    public float HeavyAttackStepDuration = 0.2f;
-    [Tooltip("Замедление во время замаха (0 = стоп, 1 = полная)")]
-    public float HeavyAttackWindupMoveMultiplier = 0.2f;
-
     [Header("Attack Buffer")]
     public float AttackBufferTime = 0.2f;
 
     [Header("Hitbox")]
     [Tooltip("Радиус хитбокса лёгкой атаки")]
-    public float LightAttackHitboxRadius = 0.7f;
+    public float LightAttackHitboxRadius = 1.2f;
 
     [Tooltip("Радиус хитбокса тяжёлой атаки")]
-    public float HeavyAttackHitboxRadius = 1.0f;
+    public float HeavyAttackHitboxRadius = 1.5f;
 
     // ---- Runtime ----
     [System.NonSerialized] public float CurrentStamina;
@@ -116,8 +106,6 @@ public class PlayerStats : ScriptableObject {
         if (HeavyAttackWindup <= 0f) HeavyAttackWindup = 0.4f;
         if (HeavyAttackImpact <= 0f) HeavyAttackImpact = 0.2f;
         if (HeavyAttackRecovery <= 0f) HeavyAttackRecovery = 0.4f;
-        if (LightAttackStepDuration <= 0f) LightAttackStepDuration = 0.15f;
-        if (HeavyAttackStepDuration <= 0f) HeavyAttackStepDuration = 0.2f;
         if (LightAttackHitboxRadius <= 0f) LightAttackHitboxRadius = 0.7f;
         if (HeavyAttackHitboxRadius <= 0f) HeavyAttackHitboxRadius = 1.0f;
     }

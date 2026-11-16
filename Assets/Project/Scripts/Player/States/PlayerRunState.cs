@@ -6,7 +6,6 @@ public class PlayerRunState : PlayerState {
         : base(c, m, f) { }
 
     public override void Update() {
-        if (Controller.IsAttacking) return;
 
         if (Controller.WantsLightAttack) {
             StateMachine.ChangeState(Factory.LightAttack);

@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24ebeb29cda978943892ed877e52d07a, type: 3}
+  m_Name: BiyuAttack
+  m_EditorClassIdentifier: 
+  abilityName: Dragon Claw
+  abilityID: Biyu_Attack
+  icon: {fileID: 21300000, guid: 405c7e15e8ee88640b0c697d0e33ec59, type: 3}
+  inputKey: Q
+  cooldown: 10
+  abilityRange: 15
+  biyuPrefab: {fileID: 2761599287298390913, guid: c091db2145fc1be43887ab290d992f08,
+    type: 3}
+  damage: 20
+  flySpeed: 15
+  attackDistance: 2.5
+  lifeTime: 2

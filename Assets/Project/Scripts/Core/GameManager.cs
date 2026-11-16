@@ -101,7 +101,7 @@ public class GameManager : MonoBehaviour {
         }
 
         if (StoryManager.Instance != null) {
-            StoryManager.Instance.ResetArena();
+            StoryManager.Instance.RespawnBossesOnly();
         }
 
         var movement = _player.GetComponent<PlayerController>();

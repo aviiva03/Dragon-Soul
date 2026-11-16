@@ -6,6 +6,8 @@ public class GameData {
     public bool hasSword;
     public bool isArenaCleared;
 
+    public bool hasDragonClaw;
+
     public float playerPosX;
     public float playerPosY;
     public float playerPosZ;
@@ -14,6 +16,7 @@ public class GameData {
     public List<string> destroyedObjectIDs = new List<string>();
     public List<string> defeatedBossIDs = new List<string>();
     public List<string> completedDialogueIDs = new List<string>();
+    public List<string> unlockedAbilityIDs = new List<string>();
 
     public Vector3 PlayerPosition {
         get => new Vector3(playerPosX, playerPosY, playerPosZ);

@@ -5,8 +5,10 @@ using UnityEngine;
 public class PlayerProgress : MonoBehaviour {
     public static PlayerProgress Instance { get; private set; }
 
+
     public bool HasSword { get; private set; } = false;
     public event Action OnSwordObtained;
+    public bool HasDragonClaw { get; private set; } = false;
 
     // ÍÎÂÎÅ: Ôëàã ïğîõîæäåíèÿ àğåíû
     public bool IsArenaCleared { get; private set; } = false;
@@ -14,6 +16,7 @@ public class PlayerProgress : MonoBehaviour {
     private List<string> _destroyedObjects = new List<string>();
     private List<string> _defeatedBosses = new List<string>();
     private List<string> _completedDialogues = new List<string>();
+    private List<string> _unlockedAbilities = new List<string>();
 
     private Vector3 _savedPlayerPosition;
     private Quaternion _savedPlayerRotation;
@@ -29,6 +32,12 @@ public class PlayerProgress : MonoBehaviour {
         if (HasSword) return;
         HasSword = true;
         OnSwordObtained?.Invoke();
+        SaveSystem.SaveGame();
+    }
+
+    public void GiveDragonClaw() {
+        if (HasDragonClaw) return;
+        HasDragonClaw = true;
         SaveSystem.SaveGame();
     }
 
@@ -60,6 +69,16 @@ public class PlayerProgress : MonoBehaviour {
         }
     }
 
+    // --- ÑÏÎÑÎÁÍÎÑÒÈ ÁÈŞ ---
+    public void UnlockAbility(string abilityID) {
+        if (!_unlockedAbilities.Contains(abilityID)) {
+            _unlockedAbilities.Add(abilityID);
+            SaveSystem.SaveGame();
+        }
+    }
+
+    public bool IsAbilityUnlocked(string abilityID) => _unlockedAbilities.Contains(abilityID);
+
     // --- ÏÎÇÈÖÈß ÈÃĞÎÊÀ ---
     public void SetPlayerPosition(Vector3 position, Quaternion rotation) {
         _savedPlayerPosition = position;
@@ -81,6 +100,8 @@ public class PlayerProgress : MonoBehaviour {
         data.destroyedObjectIDs = _destroyedObjects;
         data.defeatedBossIDs = _defeatedBosses;
         data.completedDialogueIDs = _completedDialogues;
+        data.hasDragonClaw = HasDragonClaw;
+        data.unlockedAbilityIDs = _unlockedAbilities;
 
         if (_hasSavedPosition) {
             data.PlayerPosition = _savedPlayerPosition;
@@ -95,6 +116,8 @@ public class PlayerProgress : MonoBehaviour {
         _destroyedObjects = data.destroyedObjectIDs ?? new List<string>();
         _defeatedBosses = data.defeatedBossIDs ?? new List<string>();
         _completedDialogues = data.completedDialogueIDs ?? new List<string>();
+        HasDragonClaw = data.hasDragonClaw;
+        _unlockedAbilities = data.unlockedAbilityIDs ?? new List<string>();
 
         if (data.playerPosX != 0f || data.playerPosY != 0f || data.playerPosZ != 0f) {
             _savedPlayerPosition = data.PlayerPosition;

@@ -145,6 +145,42 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Interact"",
+                    ""type"": ""Button"",
+                    ""id"": ""d013c95f-0819-4826-858f-6eec1dab49a9"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""BiyuAttack"",
+                    ""type"": ""Button"",
+                    ""id"": ""bcbbee9b-aa5f-4e62-9c0c-cfecac1ced9b"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""BiyuStun"",
+                    ""type"": ""Button"",
+                    ""id"": ""f77d0785-84bb-46fc-890e-47b4c2012a31"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""BiyuShield"",
+                    ""type"": ""Button"",
+                    ""id"": ""2f0eb6a3-4bf7-4dce-9a00-ef14556f8408"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -257,6 +293,50 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
                     ""action"": ""Sprint"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""3a070851-cf15-4e03-abf9-b8404da974ab"",
+                    ""path"": ""<Keyboard>/f"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Interact"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""e577f55d-e996-4783-b8f2-e6cc30697b83"",
+                    ""path"": ""<Keyboard>/q"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""BiyuAttack"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""32291098-48ec-4fa3-a7b3-5d330f864927"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""BiyuStun"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""01a27765-c788-4a1c-b3cc-ede10d91bda6"",
+                    ""path"": ""<Keyboard>/r"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""BiyuShield"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -271,6 +351,10 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         m_Player_LightAttack = m_Player.FindAction("LightAttack", throwIfNotFound: true);
         m_Player_HeavyAttack = m_Player.FindAction("HeavyAttack", throwIfNotFound: true);
         m_Player_Sprint = m_Player.FindAction("Sprint", throwIfNotFound: true);
+        m_Player_Interact = m_Player.FindAction("Interact", throwIfNotFound: true);
+        m_Player_BiyuAttack = m_Player.FindAction("BiyuAttack", throwIfNotFound: true);
+        m_Player_BiyuStun = m_Player.FindAction("BiyuStun", throwIfNotFound: true);
+        m_Player_BiyuShield = m_Player.FindAction("BiyuShield", throwIfNotFound: true);
     }
 
     ~@PlayerControls()
@@ -357,6 +441,10 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_LightAttack;
     private readonly InputAction m_Player_HeavyAttack;
     private readonly InputAction m_Player_Sprint;
+    private readonly InputAction m_Player_Interact;
+    private readonly InputAction m_Player_BiyuAttack;
+    private readonly InputAction m_Player_BiyuStun;
+    private readonly InputAction m_Player_BiyuShield;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -392,6 +480,22 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/Sprint".
         /// </summary>
         public InputAction @Sprint => m_Wrapper.m_Player_Sprint;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/Interact".
+        /// </summary>
+        public InputAction @Interact => m_Wrapper.m_Player_Interact;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/BiyuAttack".
+        /// </summary>
+        public InputAction @BiyuAttack => m_Wrapper.m_Player_BiyuAttack;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/BiyuStun".
+        /// </summary>
+        public InputAction @BiyuStun => m_Wrapper.m_Player_BiyuStun;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/BiyuShield".
+        /// </summary>
+        public InputAction @BiyuShield => m_Wrapper.m_Player_BiyuShield;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -436,6 +540,18 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
             @Sprint.started += instance.OnSprint;
             @Sprint.performed += instance.OnSprint;
             @Sprint.canceled += instance.OnSprint;
+            @Interact.started += instance.OnInteract;
+            @Interact.performed += instance.OnInteract;
+            @Interact.canceled += instance.OnInteract;
+            @BiyuAttack.started += instance.OnBiyuAttack;
+            @BiyuAttack.performed += instance.OnBiyuAttack;
+            @BiyuAttack.canceled += instance.OnBiyuAttack;
+            @BiyuStun.started += instance.OnBiyuStun;
+            @BiyuStun.performed += instance.OnBiyuStun;
+            @BiyuStun.canceled += instance.OnBiyuStun;
+            @BiyuShield.started += instance.OnBiyuShield;
+            @BiyuShield.performed += instance.OnBiyuShield;
+            @BiyuShield.canceled += instance.OnBiyuShield;
         }
 
         /// <summary>
@@ -465,6 +581,18 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
             @Sprint.started -= instance.OnSprint;
             @Sprint.performed -= instance.OnSprint;
             @Sprint.canceled -= instance.OnSprint;
+            @Interact.started -= instance.OnInteract;
+            @Interact.performed -= instance.OnInteract;
+            @Interact.canceled -= instance.OnInteract;
+            @BiyuAttack.started -= instance.OnBiyuAttack;
+            @BiyuAttack.performed -= instance.OnBiyuAttack;
+            @BiyuAttack.canceled -= instance.OnBiyuAttack;
+            @BiyuStun.started -= instance.OnBiyuStun;
+            @BiyuStun.performed -= instance.OnBiyuStun;
+            @BiyuStun.canceled -= instance.OnBiyuStun;
+            @BiyuShield.started -= instance.OnBiyuShield;
+            @BiyuShield.performed -= instance.OnBiyuShield;
+            @BiyuShield.canceled -= instance.OnBiyuShield;
         }
 
         /// <summary>
@@ -547,5 +675,33 @@ public partial class @PlayerControls: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnSprint(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Interact" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnInteract(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "BiyuAttack" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnBiyuAttack(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "BiyuStun" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnBiyuStun(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "BiyuShield" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnBiyuShield(InputAction.CallbackContext context);
     }
 }

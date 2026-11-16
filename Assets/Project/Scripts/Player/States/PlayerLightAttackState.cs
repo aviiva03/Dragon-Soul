@@ -10,51 +10,46 @@ public class PlayerLightAttackState : PlayerState {
         : base(c, m, f) { }
 
     public override void Enter() {
-        _attackDuration = Controller.LightAttackComboIndex == 0
-            ? Stats.LightAttack1Duration
-            : Stats.LightAttack2Duration;
-        _attackTimeLeft = _attackDuration;
-        _hasHit = false;
-
-        // Блокировка движения и поворота
         Controller.CanMove = false;
         Controller.CanRotate = false;
         Controller.MoveDirection = Vector3.zero;
         Controller.SetAttacking(true);
 
-        // Фиксируем поворот в сторону взгляда
         Vector3 lookDir = Controller.transform.forward;
         Controller.transform.rotation = Quaternion.LookRotation(lookDir);
 
         if (Controller.Sword != null) Controller.Sword.Appear();
 
         Animator.PlayLightAttack(Controller.LightAttackComboIndex);
+
+        _attackDuration = Controller.LightAttackComboIndex == 0
+            ? Stats.LightAttack1Duration
+            : Stats.LightAttack2Duration;
+
+        _attackTimeLeft = _attackDuration;
+        _hasHit = false;
     }
 
     public override void Update() {
         _attackTimeLeft -= Time.deltaTime;
 
-        // Если упали с обрыва — прерываем атаку
         if (!Controller.IsGrounded) {
             Controller.SetAttacking(false);
             StateMachine.ChangeState(Factory.Fall);
             return;
         }
 
-        // Наносим урон в середине анимации
         float elapsed = _attackDuration - _attackTimeLeft;
         if (!_hasHit && elapsed >= _attackDuration * 0.4f) {
             _hasHit = true;
             PerformHitCheck();
         }
 
-        // Прерывание на тяжелую атаку
         if (Controller.WantsHeavyAttack) {
             StateMachine.ChangeState(Factory.HeavyAttack);
             return;
         }
 
-        // Конец атаки
         if (_attackTimeLeft <= 0f) {
             Controller.SetAttacking(false);
 
@@ -74,15 +69,14 @@ public class PlayerLightAttackState : PlayerState {
     public override void Exit() {
         Controller.SetAttacking(false);
         if (Controller.Sword != null) Controller.Sword.AttackFinished();
-
-        // Возвращаем управление
         Controller.CanMove = true;
         Controller.CanRotate = true;
     }
 
     private void PerformHitCheck() {
         float damage = Controller.LightAttackComboIndex == 0 ? Stats.LightAttackDamage1 : Stats.LightAttackDamage2;
-        Controller.Hitbox.Activate(damage, Controller.transform.forward);
+        // ПЕРЕДАЕМ РАДИУС ИЗ STATS!
+        Controller.Hitbox.Activate(damage, Controller.transform.forward, Stats.LightAttackHitboxRadius);
     }
 
     private void ReturnToLocomotion() {

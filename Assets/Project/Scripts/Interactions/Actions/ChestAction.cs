@@ -30,6 +30,9 @@ public class ChestAction : InteractAction {
     [Tooltip("Точка, куда телепортируется игрок для разговора (лицом к дракону)")]
     [SerializeField] private Transform _playerTeleportPoint;
 
+    [Header("Rewards")]
+    [SerializeField] private bool _giveDragonClaw = false;
+
     private bool _isPlaying = false;
     private CinemachineBrain _brain;
 
@@ -118,11 +121,23 @@ public class ChestAction : InteractAction {
             interactable.CompleteInteractionAndSave();
         }
 
-        // 6. Возвращаем управление
+        // 6. Выключаем атаку Бию
+        if (PlayerProgress.Instance != null) {
+            PlayerProgress.Instance.UnlockAbility("Biyu_Attack");
+        }
+        if (AbilityManager.Instance != null) {
+            AbilityManager.Instance.UnlockAbility("Biyu_Attack");
+        }
+
+        // 7. Возвращаем управление
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         if (player != null) player.enabled = true;
 
         _isPlaying = false;
+
+        if (_giveDragonClaw && PlayerProgress.Instance != null) {
+            PlayerProgress.Instance.GiveDragonClaw();
+        }
     }
 }

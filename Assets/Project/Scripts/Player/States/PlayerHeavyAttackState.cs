@@ -7,14 +7,12 @@ public class PlayerHeavyAttackState : PlayerState {
     private Phase _phase;
     private float _phaseTimer;
     private bool _hasHit;
-    private bool _stepDone;
 
     public PlayerHeavyAttackState(PlayerController c, PlayerStateMachine m, PlayerStateFactory f)
         : base(c, m, f) { }
 
     public override void Enter() {
         Controller.MarkHeavyAttackTriggered();
-
         Controller.CanMove = false;
         Controller.CanRotate = false;
         Controller.MoveDirection = Vector3.zero;
@@ -25,16 +23,14 @@ public class PlayerHeavyAttackState : PlayerState {
 
         if (Controller.Sword != null) Controller.Sword.Appear();
 
-        _phase = Phase.Windup;
-        _phaseTimer = Stats.HeavyAttackWindup;
-        _hasHit = false;
-        _stepDone = false;
-
-        // Ôèêñèğóåì ïîâîğîò
         Vector3 lookDir = Controller.transform.forward;
         Controller.transform.rotation = Quaternion.LookRotation(lookDir);
 
         Animator.PlayHeavyAttack();
+
+        _phase = Phase.Windup;
+        _phaseTimer = Stats.HeavyAttackWindup;
+        _hasHit = false;
     }
 
     public override void Update() {
@@ -55,11 +51,6 @@ public class PlayerHeavyAttackState : PlayerState {
                 break;
 
             case Phase.Impact:
-                if (!_stepDone) {
-                    _stepDone = true;
-                    // Ìàëåíüêèé øàã âïåğåä ïğè óäàğå
-                    Controller.StartStep(Controller.transform.forward, Stats.HeavyAttackStepDistance, Stats.HeavyAttackStepDuration);
-                }
                 if (!_hasHit) {
                     _hasHit = true;
                     PerformHitCheck();
@@ -82,13 +73,16 @@ public class PlayerHeavyAttackState : PlayerState {
     public override void Exit() {
         Controller.SetAttacking(false);
         if (Controller.Sword != null) Controller.Sword.AttackFinished();
-
         Controller.CanMove = true;
         Controller.CanRotate = true;
+
+        // ÏĞÈÍÓÄÈÒÅËÜÍÎ ÑÁĞÀÑÛÂÀÅÌ ÑÊÎĞÎÑÒÜ Â ÀÍÈÌÀÒÎĞÅ, ×ÒÎÁÛ ÍÅ ÁÅÆÀË ÍÀ ÌÅÑÒÅ
+        Controller.Animator.SetSpeed(0f);
     }
 
     private void PerformHitCheck() {
-        Controller.Hitbox.Activate(Stats.HeavyAttackDamage, Controller.transform.forward);
+        // ÏÅĞÅÄÀÅÌ ĞÀÄÈÓÑ ÈÇ STATS!
+        Controller.Hitbox.Activate(Stats.HeavyAttackDamage, Controller.transform.forward, Stats.HeavyAttackHitboxRadius);
     }
 
     private void ReturnToLocomotion() {
