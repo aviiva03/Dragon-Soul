@@ -9,10 +9,10 @@ public class DialogueManager : MonoBehaviour {
     [SerializeField] private DialogueUI _dialogueUI;
     [SerializeField] private PlayerController _playerController;
     [SerializeField] private CanvasGroup _hudCanvasGroup;
-    [SerializeField] private CinemachineFreeLook _playerCamera;
 
     [Header("Settings")]
     [SerializeField] private float _hudFadeDuration = 0.3f;
+    [SerializeField] private float _cameraBlendTime = 1.0f;
 
     public bool IsDialogueActive { get; private set; }
 
@@ -39,6 +39,7 @@ public class DialogueManager : MonoBehaviour {
             _playerController.enabled = false;
         }
 
+        // Телепорт игрока
         Vector3 originalPosition = Vector3.zero;
         Quaternion originalRotation = Quaternion.identity;
         CharacterController cc = null;
@@ -63,49 +64,35 @@ public class DialogueManager : MonoBehaviour {
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
+        // ПЕРЕКЛЮЧАЕМ КАМЕРУ (только через контроллер!)
         CinemachineVirtualCamera currentCamera = dialogueCamera;
-        CinemachineBrain brain = Camera.main != null ? Camera.main.GetComponent<CinemachineBrain>() : null;
 
-        if (currentCamera != null && brain != null) {
-            CinemachineVirtualCamera[] allCameras = FindObjectsOfType<CinemachineVirtualCamera>();
-            foreach (var cam in allCameras) cam.enabled = false;
-            if (_playerCamera != null) _playerCamera.enabled = false;
-
-            currentCamera.enabled = true;
-            currentCamera.Priority = 50;
-            brain.m_DefaultBlend.m_Time = isStandardDialogue ? 1.5f : 0f;
-
-            if (isStandardDialogue) yield return new WaitForSeconds(1.5f);
-            else yield return null;
+        if (currentCamera != null && DialogueCameraController.Instance != null) {
+            DialogueCameraController.Instance.SwitchToDialogueCamera(currentCamera, _cameraBlendTime);
+            yield return new WaitForSeconds(_cameraBlendTime);
         }
 
         string currentNodeId = dialogue.startNodeId;
 
         while (!string.IsNullOrEmpty(currentNodeId) && currentNodeId != "END") {
             DialogueNode node = dialogue.GetNode(currentNodeId);
-            if (node == null) {
-                Debug.LogError($"Узел {currentNodeId} не найден!");
-                break;
-            }
+            if (node == null) break;
 
-            // Смена камеры
+            // Смена камеры по имени (тоже только через контроллер)
             if (!string.IsNullOrEmpty(node.overrideCameraName)) {
                 GameObject camObj = GameObject.Find(node.overrideCameraName);
                 if (camObj != null) {
                     CinemachineVirtualCamera newCam = camObj.GetComponent<CinemachineVirtualCamera>();
-                    if (newCam != null) {
-                        if (currentCamera != null) currentCamera.Priority = 40;
+                    if (newCam != null && newCam != currentCamera) {
                         currentCamera = newCam;
-                        currentCamera.enabled = true;
-                        currentCamera.Priority = 50;
+                        DialogueCameraController.Instance.SwitchToDialogueCamera(currentCamera, _cameraBlendTime);
+                        yield return new WaitForSeconds(_cameraBlendTime);
                     }
-                } else {
-                    Debug.LogWarning($"[Dialogue] Камера '{node.overrideCameraName}' не найдена!");
                 }
             } else if (string.IsNullOrEmpty(node.overrideCameraName) && currentCamera != dialogueCamera && dialogueCamera != null) {
-                if (currentCamera != null) currentCamera.Priority = 40;
                 currentCamera = dialogueCamera;
-                currentCamera.Priority = 50;
+                DialogueCameraController.Instance.SwitchToDialogueCamera(currentCamera, _cameraBlendTime);
+                yield return new WaitForSeconds(_cameraBlendTime);
             }
 
             // Жестикуляция
@@ -137,22 +124,10 @@ public class DialogueManager : MonoBehaviour {
             }
         }
 
-        // Возврат камеры
-        CinemachineVirtualCamera[] allActiveCameras = FindObjectsOfType<CinemachineVirtualCamera>();
-        foreach (var cam in allActiveCameras) {
-            cam.enabled = false;
-            cam.Priority = 5;
-        }
-
-        if (_playerCamera != null) {
-            _playerCamera.enabled = true;
-            _playerCamera.Priority = 10;
-        }
-
-        if (brain != null) {
-            brain.m_DefaultBlend.m_Time = isStandardDialogue ? 1.5f : 0f;
-            if (isStandardDialogue) yield return new WaitForSeconds(1.5f);
-            else yield return null;
+        // ВОЗВРАЩАЕМ КАМЕРУ
+        if (DialogueCameraController.Instance != null) {
+            DialogueCameraController.Instance.ReturnToPlayerCamera(_cameraBlendTime);
+            yield return new WaitForSeconds(_cameraBlendTime);
         }
 
         if (isStandardDialogue && playerTeleportPoint != null && _playerController != null) {

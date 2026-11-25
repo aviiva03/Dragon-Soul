@@ -6,13 +6,10 @@ public class AbilityManager : MonoBehaviour {
     public static AbilityManager Instance { get; private set; }
 
     [Header("All Abilities")]
-    [Tooltip("Перетащи сюда ВСЕ способности игры (Q, E, R)")]
     [SerializeField] private AbilityData[] _allAbilities;
     [SerializeField] private Transform _spawnPoint;
 
-    // Словарь кулдаунов
     private Dictionary<AbilityData, float> _cooldowns = new Dictionary<AbilityData, float>();
-
     public List<AbilityData> UnlockedAbilities { get; private set; } = new List<AbilityData>();
 
     private void Awake() {

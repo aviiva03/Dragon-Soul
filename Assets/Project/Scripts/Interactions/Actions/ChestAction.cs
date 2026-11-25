@@ -23,18 +23,10 @@ public class ChestAction : InteractAction {
     [SerializeField] private DialogueData _memoryDialogue;
     [SerializeField] private CinemachineVirtualCamera _memoryCamera;
 
-    [Header("Camera")]
-    [SerializeField] private CinemachineFreeLook _playerCamera;
-
     [Header("Player Position")]
-    [Tooltip("Точка, куда телепортируется игрок для разговора (лицом к дракону)")]
     [SerializeField] private Transform _playerTeleportPoint;
 
-    [Header("Rewards")]
-    [SerializeField] private bool _giveDragonClaw = false;
-
     private bool _isPlaying = false;
-    private CinemachineBrain _brain;
 
     public override void Execute() {
         if (_isPlaying) return;
@@ -46,15 +38,16 @@ public class ChestAction : InteractAction {
             player.enabled = false;
         }
 
+        // БЛОКИРУЕМ КАМЕРУ СРАЗУ, как только открыли сундук
+        if (CameraLockManager.Instance != null) CameraLockManager.Instance.LockCamera();
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
         StartCoroutine(ChestRoutine(player));
     }
 
     private IEnumerator ChestRoutine(PlayerController player) {
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-
-        if (Camera.main != null) _brain = Camera.main.GetComponent<CinemachineBrain>();
-
         // 1. Анимация сундука
         if (_chestAnimator != null && !string.IsNullOrEmpty(_openTriggerName)) {
             _chestAnimator.SetTrigger(_openTriggerName);
@@ -63,10 +56,7 @@ public class ChestAction : InteractAction {
             yield return new WaitForSeconds(1.0f);
         }
 
-        if (_brain != null) _brain.enabled = false;
-        if (_playerCamera != null) _playerCamera.enabled = false;
-
-        // 2. Артефакт
+        // 2. Артефакт (камера на игроке, но заблокирована)
         if (_artifactPanel != null) {
             if (_artifactImage != null && _artifactSprite != null) _artifactImage.sprite = _artifactSprite;
 
@@ -90,54 +80,65 @@ public class ChestAction : InteractAction {
             _artifactPanel.gameObject.SetActive(false);
         }
 
-        if (_playerCamera != null) _playerCamera.enabled = true;
-        if (_brain != null) _brain.enabled = true;
+        // 3. Телепорт к дракону
+        if (_playerTeleportPoint != null && player != null) {
+            var cc = player.GetComponent<CharacterController>();
+            if (cc != null) cc.enabled = false;
 
-        // 3. Включаем дракона Бию
-        if (_biuModel != null) {
-            _biuModel.SetActive(true);
+            player.transform.position = _playerTeleportPoint.position;
+            player.transform.rotation = _playerTeleportPoint.rotation;
+
+            if (cc != null) cc.enabled = true;
         }
 
-        // 4. Запускаем диалог
+        // 4. Плавно переключаем на камеру дракона
+        if (_memoryCamera != null && DialogueCameraController.Instance != null) {
+            DialogueCameraController.Instance.SwitchToDialogueCamera(_memoryCamera, 1.0f);
+            yield return new WaitForSeconds(1.0f);
+        }
+
+        // 5. Включаем дракона
+        if (_biuModel != null) _biuModel.SetActive(true);
+
+        // 6. Диалог
         if (DialogueManager.Instance != null && _memoryDialogue != null) {
             TalkingAnimator[] characters = null;
-            if (_biuAnimator != null) {
-                characters = new TalkingAnimator[] { _biuAnimator };
-            }
+            if (_biuAnimator != null) characters = new TalkingAnimator[] { _biuAnimator };
 
-            DialogueManager.Instance.StartDialogue(_memoryDialogue, _memoryCamera, null, _playerTeleportPoint, characters);
+            DialogueManager.Instance.StartDialogue(_memoryDialogue, _memoryCamera, null, null, characters);
 
             while (DialogueManager.Instance.IsDialogueActive) {
                 yield return null;
             }
         }
 
-        // 5. Выключаем дракона
+        // 7. Выключаем дракона
         if (_biuModel != null) _biuModel.SetActive(false);
 
-        // --- ЗАВЕРШАЕМ ВЗАИМОДЕЙСТВИЕ ---
-        var interactable = GetComponent<InteractableObject>();
-        if (interactable != null) {
-            interactable.CompleteInteractionAndSave();
+        // 8. Возвращаем камеру игроку
+        if (DialogueCameraController.Instance != null) {
+            DialogueCameraController.Instance.ReturnToPlayerCamera(1.0f);
+            yield return new WaitForSeconds(1.0f);
         }
 
-        // 6. Выключаем атаку Бию
+        // 9. ВЫДАЕМ СПОСОБНОСТЬ
         if (PlayerProgress.Instance != null) {
-            PlayerProgress.Instance.UnlockAbility("Biyu_Attack");
+            PlayerProgress.Instance.GiveDragonClaw();
         }
         if (AbilityManager.Instance != null) {
             AbilityManager.Instance.UnlockAbility("Biyu_Attack");
         }
 
-        // 7. Возвращаем управление
+        var interactable = GetComponent<InteractableObject>();
+        if (interactable != null) interactable.CompleteInteractionAndSave();
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         if (player != null) player.enabled = true;
 
-        _isPlaying = false;
+        // РАЗБЛОКИРУЕМ КАМЕРУ В САМОМ КОНЦЕ
+        if (CameraLockManager.Instance != null) CameraLockManager.Instance.UnlockCamera();
 
-        if (_giveDragonClaw && PlayerProgress.Instance != null) {
-            PlayerProgress.Instance.GiveDragonClaw();
-        }
+        _isPlaying = false;
     }
 }

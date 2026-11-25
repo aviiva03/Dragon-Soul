@@ -1,8 +1,8 @@
-using Cinemachine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Cinemachine;
 
 public class SwordPuzzleManager : MonoBehaviour {
     public static SwordPuzzleManager Instance { get; private set; }
@@ -16,10 +16,8 @@ public class SwordPuzzleManager : MonoBehaviour {
     [SerializeField] private Transform _slotsParent;
     [SerializeField] private GameObject _puzzlePanel;
 
-    [Header("Camera")]
-    [SerializeField] private CinemachineFreeLook _playerCamera;
-
     private CinemachineBrain _brain;
+    private CinemachineFreeLook _playerCamera;
 
     public event Action OnPuzzleCompleted;
 
@@ -35,6 +33,7 @@ public class SwordPuzzleManager : MonoBehaviour {
         else Instance = this;
 
         if (Camera.main != null) _brain = Camera.main.GetComponent<CinemachineBrain>();
+        _playerCamera = FindObjectOfType<CinemachineFreeLook>();
     }
 
     private void Start() {
@@ -56,7 +55,7 @@ public class SwordPuzzleManager : MonoBehaviour {
 
         if (_assembledSwordImage != null) _assembledSwordImage.SetActive(false);
 
-        // Блокируем камеру
+        // ЖЕСТКАЯ БЛОКИРОВКА КАМЕРЫ
         if (_brain != null) _brain.enabled = false;
         if (_playerCamera != null) _playerCamera.enabled = false;
 
@@ -105,12 +104,11 @@ public class SwordPuzzleManager : MonoBehaviour {
 
         if (_puzzlePanel != null) _puzzlePanel.SetActive(false);
 
-        // Возвращаем камеру
-        if (_playerCamera != null) _playerCamera.enabled = true;
-        if (_brain != null) _brain.enabled = true;
-
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        // Камеру НЕ включаем здесь, её включит SwordShardsAction (после затемнения экрана)
+        // Но чтобы камера не дергалась, мы её оставляем выключенной.
 
         OnPuzzleCompleted?.Invoke();
     }

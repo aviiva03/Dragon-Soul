@@ -9,6 +9,10 @@ public class SwordShardsAction : InteractAction {
     [SerializeField] private GameObject _pastSceneRoot;
     [SerializeField] private CinemachineVirtualCamera _pastCamera;
 
+    [Header("Sword Models")]
+    [SerializeField] private GameObject _wholeSwordModel;
+    [SerializeField] private GameObject _shardsModel;
+
     [Header("Characters")]
     [SerializeField] private TalkingAnimator _fatherAnim;
     [SerializeField] private TalkingAnimator _dashenYoungAnim;
@@ -18,6 +22,7 @@ public class SwordShardsAction : InteractAction {
     [SerializeField] private CanvasGroup _filterGroup;
     [SerializeField] private TMP_Text _titleText;
     [SerializeField] private CanvasGroup _hudGroup;
+    [SerializeField] private GameObject _abilityBarUI;
     [SerializeField] private DialogueData _memoryDialogue;
 
     [Header("Settings")]
@@ -25,7 +30,6 @@ public class SwordShardsAction : InteractAction {
     [SerializeField] private float _titleHoldTime = 2f;
 
     private bool _isPlaying = false;
-    private CinemachineFreeLook _playerCam;
     private CinemachineBrain _brain;
 
     public override void Execute() {
@@ -39,11 +43,7 @@ public class SwordShardsAction : InteractAction {
             player.enabled = false;
         }
 
-        _playerCam = FindObjectOfType<CinemachineFreeLook>();
-
-        if (Camera.main != null) {
-            _brain = Camera.main.GetComponent<CinemachineBrain>();
-        }
+        if (Camera.main != null) _brain = Camera.main.GetComponent<CinemachineBrain>();
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -53,49 +53,41 @@ public class SwordShardsAction : InteractAction {
 
     private IEnumerator CinematicSequence(PlayerController player) {
         SetPlayerVisible(player, false);
-        if (_hudGroup != null) _hudGroup.alpha = 0f;
 
-        // 1. Затемняем экран (вход в прошлое)
+        if (_hudGroup != null) _hudGroup.alpha = 0f;
+        if (_abilityBarUI != null) _abilityBarUI.SetActive(false);
+
+        // 1. Затемняем экран
         yield return FadeUI(_fadeGroup, 0f, 1f, _fadeTime);
 
         if (_pastSceneRoot != null) _pastSceneRoot.SetActive(true);
+        if (_wholeSwordModel != null) _wholeSwordModel.SetActive(true);
+        if (_shardsModel != null) _shardsModel.SetActive(false);
+
         if (_filterGroup != null) {
             _filterGroup.gameObject.SetActive(true);
             _filterGroup.alpha = 1f;
         }
 
-        if (_playerCam != null) _playerCam.enabled = false;
-
-        CinemachineVirtualCamera[] allCams = FindObjectsOfType<CinemachineVirtualCamera>();
-        foreach (var c in allCams) c.enabled = false;
-
-        if (_pastCamera != null) {
-            _pastCamera.enabled = true;
-            _pastCamera.Priority = 50;
+        // Включаем камеру прошлого
+        if (DialogueCameraController.Instance != null) {
+            DialogueCameraController.Instance.SetCameraInstant(_pastCamera);
         }
 
-        if (_brain != null && _pastCamera != null) {
-            _brain.m_DefaultBlend.m_Time = 0f;
-            _brain.enabled = true;
+        yield return null;
 
-            yield return null;
+        // --- ВОТ ГЛАВНОЕ: ОТКЛЮЧАЕМ BRAIN, ЧТОБЫ ОН НЕ ДВИГАЛСЯ ---
+        if (_brain != null) _brain.enabled = false;
 
-            Camera.main.transform.position = _pastCamera.transform.position;
-            Camera.main.transform.rotation = _pastCamera.transform.rotation;
-
-            yield return null;
-        }
-
-        // Показываем текст "Прошлое..."
         _titleText.text = "Прошлое...";
         _titleText.gameObject.SetActive(true);
 
+        yield return FadeUI(_fadeGroup, 1f, 0f, _fadeTime);
         yield return new WaitForSeconds(_titleHoldTime);
 
         _titleText.gameObject.SetActive(false);
-        yield return FadeUI(_fadeGroup, 1f, 0f, _fadeTime);
 
-        // Диалог в прошлом
+        // 2. Диалог (камера зафиксирована)
         TalkingAnimator[] talkers = new TalkingAnimator[] { _fatherAnim, _dashenYoungAnim };
         DialogueManager.Instance.StartCinematicDialogue(_memoryDialogue, talkers);
 
@@ -105,7 +97,7 @@ public class SwordShardsAction : InteractAction {
 
         if (_pastSceneRoot != null) _pastSceneRoot.SetActive(false);
 
-        // Мини-игра (Пазл)
+        // 3. Пазл (камера зафиксирована, Brain выключен)
         bool puzzleFinished = false;
         if (SwordPuzzleManager.Instance != null) {
             SwordPuzzleManager.Instance.OnPuzzleCompleted += () => puzzleFinished = true;
@@ -118,52 +110,22 @@ public class SwordShardsAction : InteractAction {
             yield return null;
         }
 
-        // ==========================================
-        // ЭТАП 4: ВОЗВРАЩЕНИЕ (С БЛОКИРОВКОЙ КАМЕРЫ)
-        // ==========================================
-
-        // 1. Сначала плавно затемняем экран (пока пазл закрылся, но фильтр еще висит)
+        // 4. Затемняем экран для возврата
         yield return FadeUI(_fadeGroup, 0f, 1f, _fadeTime);
 
-        // 2. Пока экран черный — убираем фильтр и прошлое
+        if (_wholeSwordModel != null) _wholeSwordModel.SetActive(false);
+        if (_shardsModel != null) _shardsModel.SetActive(true);
         if (_filterGroup != null) _filterGroup.gameObject.SetActive(false);
 
-        // 3. Блокируем мозг камеры, чтобы она не дернулась
-        if (_brain != null) _brain.enabled = false;
+        // 5. Включаем Brain обратно и возвращаем камеру
+        if (_brain != null) _brain.enabled = true;
 
-        // 4. Меняем камеры (возвращаем камеру игрока)
-        if (_pastCamera != null) _pastCamera.enabled = false;
-        if (_playerCam != null) {
-            _playerCam.enabled = true;
-            _playerCam.Priority = 10;
+        if (DialogueCameraController.Instance != null) {
+            DialogueCameraController.Instance.ReturnToPlayerCamera(0f);
         }
 
-        // 5. Включаем мозг и принудительно ставим его на камеру игрока (экран ЧЕРНЫЙ, игрок не видит рывка)
-        if (_brain != null) {
-            _brain.m_DefaultBlend.m_Time = 0f;
-            _brain.enabled = true;
-
-            yield return null;
-
-            if (_playerCam != null && Camera.main != null) {
-                Camera.main.transform.position = _playerCam.transform.position;
-                Camera.main.transform.rotation = _playerCam.transform.rotation;
-            }
-
-            yield return null;
-        }
-
-        // 6. Показываем текст "Возвращение..."
-        _titleText.text = "Возвращение в настоящее...";
-        _titleText.gameObject.SetActive(true);
-
-        yield return new WaitForSeconds(_titleHoldTime);
-        _titleText.gameObject.SetActive(false);
-
-        // 7. Возвращаем игрока (он снова на сцене, но управление пока выключено)
+        // --- НОВОЕ: ВКЛЮЧАЕМ ИГРОКА И ЖДЕМ КАДР ---
         SetPlayerVisible(player, true);
-        if (_hudGroup != null) _hudGroup.alpha = 1f;
-
         if (player != null) {
             player.enabled = true;
             if (player.Sword != null) {
@@ -172,15 +134,26 @@ public class SwordShardsAction : InteractAction {
             }
         }
 
-        if (PlayerProgress.Instance != null) PlayerProgress.Instance.GiveSword();
+        yield return null; // Ждем кадр, чтобы камера встала на место и отрендерила игрока
+        yield return null; // Еще один кадр на всякий случай
 
-        // 8. ТОЛЬКО ТЕПЕРЬ убираем черный экран (игрок начинает видеть игру и может крутить камеру)
+        _titleText.text = "Возвращение в настоящее...";
+        _titleText.gameObject.SetActive(true);
+
+        // 6. Открываем экран (теперь игрок уже виден)
         yield return FadeUI(_fadeGroup, 1f, 0f, _fadeTime);
+        yield return new WaitForSeconds(_titleHoldTime);
+
+        _titleText.gameObject.SetActive(false);
+
+        if (_hudGroup != null) _hudGroup.alpha = 1f;
+        if (_abilityBarUI != null) _abilityBarUI.SetActive(true);
+
+        if (PlayerProgress.Instance != null) PlayerProgress.Instance.GiveSword();
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
-        // Завершаем взаимодействие
         var interactable = GetComponent<InteractableObject>();
         if (interactable != null) {
             interactable.CompleteInteractionAndSave();

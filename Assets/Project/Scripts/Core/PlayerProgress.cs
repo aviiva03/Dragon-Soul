@@ -5,13 +5,11 @@ using UnityEngine;
 public class PlayerProgress : MonoBehaviour {
     public static PlayerProgress Instance { get; private set; }
 
-
     public bool HasSword { get; private set; } = false;
-    public event Action OnSwordObtained;
     public bool HasDragonClaw { get; private set; } = false;
-
-    // НОВОЕ: Флаг прохождения арены
     public bool IsArenaCleared { get; private set; } = false;
+
+    public event Action OnSwordObtained;
 
     private List<string> _destroyedObjects = new List<string>();
     private List<string> _defeatedBosses = new List<string>();
@@ -38,6 +36,7 @@ public class PlayerProgress : MonoBehaviour {
     public void GiveDragonClaw() {
         if (HasDragonClaw) return;
         HasDragonClaw = true;
+        UnlockAbility("Biyu_Attack");
         SaveSystem.SaveGame();
     }
 
@@ -73,6 +72,11 @@ public class PlayerProgress : MonoBehaviour {
     public void UnlockAbility(string abilityID) {
         if (!_unlockedAbilities.Contains(abilityID)) {
             _unlockedAbilities.Add(abilityID);
+
+            if (AbilityManager.Instance != null) {
+                AbilityManager.Instance.UnlockAbility(abilityID);
+            }
+
             SaveSystem.SaveGame();
         }
     }
@@ -96,11 +100,11 @@ public class PlayerProgress : MonoBehaviour {
     public GameData GetSaveData() {
         GameData data = new GameData();
         data.hasSword = HasSword;
-        data.isArenaCleared = IsArenaCleared; // Сохраняем флаг
+        data.hasDragonClaw = HasDragonClaw;
+        data.isArenaCleared = IsArenaCleared;
         data.destroyedObjectIDs = _destroyedObjects;
         data.defeatedBossIDs = _defeatedBosses;
         data.completedDialogueIDs = _completedDialogues;
-        data.hasDragonClaw = HasDragonClaw;
         data.unlockedAbilityIDs = _unlockedAbilities;
 
         if (_hasSavedPosition) {
@@ -112,11 +116,11 @@ public class PlayerProgress : MonoBehaviour {
 
     public void LoadFromData(GameData data) {
         HasSword = data.hasSword;
-        IsArenaCleared = data.isArenaCleared; // Загружаем флаг
+        HasDragonClaw = data.hasDragonClaw;
+        IsArenaCleared = data.isArenaCleared;
         _destroyedObjects = data.destroyedObjectIDs ?? new List<string>();
         _defeatedBosses = data.defeatedBossIDs ?? new List<string>();
         _completedDialogues = data.completedDialogueIDs ?? new List<string>();
-        HasDragonClaw = data.hasDragonClaw;
         _unlockedAbilities = data.unlockedAbilityIDs ?? new List<string>();
 
         if (data.playerPosX != 0f || data.playerPosY != 0f || data.playerPosZ != 0f) {
