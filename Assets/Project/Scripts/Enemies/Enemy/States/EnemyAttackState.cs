@@ -8,6 +8,11 @@ public class EnemyAttackState : State {
     private ComboData _currentCombo;
     private int _stepIndex;
 
+    // Фаза восстановления после атаки
+    private bool _isRecovering = false;
+    private float _recoveryTimer = 0f;
+    private const float RecoveryDuration = 0.8f; // Сколько секунд враг стоит после удара
+
     private AttackData CurrentStep => _currentCombo.steps[_stepIndex];
 
     public EnemyAttackState(EnemyController enemy) {
@@ -25,6 +30,8 @@ public class EnemyAttackState : State {
 
         _enemy.StopMoving();
         _enemy.Agent.updateRotation = false;
+        _isRecovering = false;
+        _recoveryTimer = 0f;
 
         if (_enemy.PendingCombo != null) {
             _currentCombo = _enemy.PendingCombo;
@@ -43,6 +50,16 @@ public class EnemyAttackState : State {
     }
 
     public override void Update() {
+        // Если мы в фазе восстановления — просто стоим и ждем
+        if (_isRecovering) {
+            _recoveryTimer += Time.deltaTime;
+            if (_recoveryTimer >= RecoveryDuration) {
+                _isRecovering = false;
+                ReturnToChaseOrIdle();
+            }
+            return;
+        }
+
         _executor.Tick();
     }
 
@@ -72,14 +89,19 @@ public class EnemyAttackState : State {
         _stepIndex++;
 
         if (_stepIndex >= _currentCombo.steps.Length) {
+            // Комбо закончилось, переходим в восстановление
             _enemy.NotifyAttackFinished();
-
-            if (_enemy.DistanceToPlayer() <= _enemy.DetectionRange && _enemy.CanSeePlayer())
-                _enemy.ToChase();
-            else
-                _enemy.ToIdle();
+            _isRecovering = true;
+            _recoveryTimer = 0f;
         } else {
             _executor.Start(CurrentStep);
         }
+    }
+
+    private void ReturnToChaseOrIdle() {
+        if (_enemy.DistanceToPlayer() <= _enemy.DetectionRange && _enemy.CanSeePlayer())
+            _enemy.ToChase();
+        else
+            _enemy.ToIdle();
     }
 }

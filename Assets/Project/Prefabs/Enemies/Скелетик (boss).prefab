@@ -1696,7 +1696,7 @@ MonoBehaviour:
   _agent: {fileID: 1011976560352804127}
   _health: {fileID: 423529006876007634}
   _maxAttackRange: 15
-  _preferredDistance: 6
+  _preferredDistance: 4
   _distanceTolerance: 1.5
   _globalAttackCooldown: 2.5
   _chaseSpeed: 4

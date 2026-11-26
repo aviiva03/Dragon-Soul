@@ -26,10 +26,9 @@ public class EnemyIdleState : State {
 
         if (canSee) {
             _enemy.RotateTowardsPlayer(8f);
-            if (_enemy.DistanceToPlayer() <= _enemy.AttackRange) {
-                _enemy.ToChase();
-                return;
-            }
+            // Если увидел игрока — сразу в погоню
+            _enemy.ToChase();
+            return;
         }
 
         _timer += Time.deltaTime;

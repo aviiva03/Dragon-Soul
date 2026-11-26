@@ -13,7 +13,7 @@ public class CombatState : State {
 
     private Vector3 _strafeTarget;
     private float _strafeTimer;
-    private const float StrafeDuration = 1.2f;
+    private const float StrafeDuration = 1.5f;
 
     private float _repositionTimer;
     private const float RepositionDuration = 0.8f;
@@ -71,6 +71,7 @@ public class CombatState : State {
         _boss.RotateTowardsPlayer(12f);
         float distance = _boss.DistanceToPlayer();
 
+        // Если можем атаковать — атакуем!
         if (_boss.CanAttack()) {
             ComboData combo = _boss.AttackSelector.SelectCombo(distance);
             if (combo != null) {
@@ -79,11 +80,12 @@ public class CombatState : State {
             }
         }
 
+        // Если игрок далеко — подходим
         if (distance > _boss.PreferredDistance + _boss.DistanceTolerance) {
             EnterApproaching();
-        } else if (distance < _boss.PreferredDistance - _boss.DistanceTolerance) {
-            EnterApproaching();
-        } else {
+        }
+        // Если близко, но не атакуем (кулдаун) — кружим
+        else if (distance <= _boss.PreferredDistance + _boss.DistanceTolerance) {
             EnterStrafing();
         }
     }
@@ -96,12 +98,6 @@ public class CombatState : State {
     private void TickApproaching() {
         _boss.RotateTowardsPlayer(12f);
         float distance = _boss.DistanceToPlayer();
-        float target = _boss.PreferredDistance;
-
-        if (Mathf.Abs(distance - target) <= _boss.DistanceTolerance) {
-            EnterManaging();
-            return;
-        }
 
         if (_boss.CanAttack()) {
             ComboData combo = _boss.AttackSelector.SelectCombo(distance);
@@ -111,20 +107,18 @@ public class CombatState : State {
             }
         }
 
-        if (distance > target) {
-            _boss.MoveTo(_boss.Player.position);
-        } else {
-            Vector3 away = (_boss.transform.position - _boss.Player.position).normalized;
-            away.y = 0f;
-            Vector3 dest = _boss.transform.position + away * 2f;
-            _boss.MoveTo(dest);
+        if (distance <= _boss.PreferredDistance + _boss.DistanceTolerance) {
+            EnterManaging();
+            return;
         }
+
+        _boss.MoveTo(_boss.Player.position);
     }
 
     private void EnterStrafing() {
         _phase = Phase.Strafing;
         _strafeTimer = 0f;
-        _boss.Agent.speed = _boss.GetCurrentSpeed() * 0.6f;
+        _boss.Agent.speed = _boss.GetCurrentSpeed() * 0.5f; // Медленно кружит
         PickNewStrafeTarget();
     }
 
@@ -132,6 +126,7 @@ public class CombatState : State {
         _boss.RotateTowardsPlayer(12f);
         float distance = _boss.DistanceToPlayer();
 
+        // Если кулдаун прошел — прерываем кружение и атакуем!
         if (_boss.CanAttack()) {
             ComboData combo = _boss.AttackSelector.SelectCombo(distance);
             if (combo != null) {
@@ -142,15 +137,17 @@ public class CombatState : State {
 
         _strafeTimer += Time.deltaTime;
 
+        // Если долго кружим — меняем точку
         if (_strafeTimer >= StrafeDuration) {
-            EnterManaging();
-            return;
+            PickNewStrafeTarget();
         }
 
         _boss.MoveTo(_strafeTarget);
     }
 
     private void PickNewStrafeTarget() {
+        _strafeTimer = 0f;
+        // Кружим на очень близком расстоянии (PreferredDistance)
         float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
         Vector3 offset = new Vector3(Mathf.Sin(angle), 0f, Mathf.Cos(angle));
         offset *= _boss.PreferredDistance;
@@ -195,15 +192,17 @@ public class CombatState : State {
         _repositionTimer = 0f;
         _boss.Agent.speed = _boss.GetCurrentSpeed();
 
+        // Отходим на полшага (0.5 метра), чтобы дать игроку окно
         Vector3 away = (_boss.transform.position - _boss.Player.position).normalized;
         away.y = 0f;
-        Vector3 target = _boss.transform.position + away * 3f;
+        Vector3 target = _boss.transform.position + away * 0.5f;
         _boss.MoveTo(target);
     }
 
     private void TickRepositioning() {
         _boss.RotateTowardsPlayer(6f);
         _repositionTimer += Time.deltaTime;
+
         if (_repositionTimer >= RepositionDuration) {
             EnterManaging();
         }

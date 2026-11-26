@@ -1698,9 +1698,7 @@ MonoBehaviour:
   _patrolSpeed: 2
   _chaseSpeed: 4
   _patrolPoints: []
-  _attackRange: 5
-  _preferredDistance: 4
-  _distanceTolerance: 1
+  _attackRange: 2
   _globalAttackCooldown: 2
   _attackSelector: {fileID: 7404423253010123437}
 --- !u!114 &7404423253010123437

@@ -11,8 +11,6 @@ public class EnemyController : EnemyBase {
 
     [Header("Combat")]
     [SerializeField] private float _attackRange = 2f;
-    [SerializeField] private float _preferredDistance = 4f;
-    [SerializeField] private float _distanceTolerance = 1f;
     [SerializeField] private float _globalAttackCooldown = 2.0f;
     [SerializeField] private SimpleAttackSelector _attackSelector;
 
@@ -31,8 +29,6 @@ public class EnemyController : EnemyBase {
     public float ChaseSpeed => _chaseSpeed;
     public Transform[] PatrolPoints => _patrolPoints;
     public float AttackRange => _attackRange;
-    public float PreferredDistance => _preferredDistance;
-    public float DistanceTolerance => _distanceTolerance;
     public SimpleAttackSelector SimpleAttackSelector => _attackSelector;
     public ComboData PendingCombo { get; private set; }
 
